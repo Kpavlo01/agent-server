@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent Control Panel</title>
+  <style>
+    body { font-family: sans-serif; background: #121212; color: white; padding: 20px; text-align: center; }
+    .card { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 15px auto; max-width: 400px; }
+    button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+    textarea { width: 95%; height: 60px; margin-top: 10px; border-radius: 6px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h2>AI Agent Control Panel</h2>
+  
+  <div class="card">
+    <h3>Επιλογή Agent</h3>
+    <textarea id="prompt" placeholder="Γράψε εντολή ή μήνυμα..."></textarea>
+    <button onclick="setAgent('SECRETARY')"> Activate Γραμματέας</button>
+    <button onclick="setAgent('REMINDER')" style="background:#ff9800;"> Activate Υπενθυμίσεις</button>
+    <button onclick="setAgent('SOCIAL')" style="background:#e91e63;"> Activate Social Media</button>
+  </div>
+
+  <script>
+    async function setAgent(type) {
+      const prompt = document.getElementById('prompt').value;
+      await fetch('/api/agent/switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, prompt })
+      });
+      alert('Ο Agent ενεργοποιήθηκε! Η οθόνη θα ενημερωθεί.');
+    }
+  </script>
+</body>
+</html>
