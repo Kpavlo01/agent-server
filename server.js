@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 require('dotenv').config();
 const { GoogleGenAI } = require('@google/genai');
 
@@ -9,57 +8,85 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Αρχικοποίηση AI Client (χρειάζεται GEMINI_API_KEY στο Render)
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
-let currentAgent = {
-  agent: "SECRETARY",
-  title: "AI Brain Ready",
-  message: "Awaiting input..."
+// Προκαθορισμένα UI Themes για κάθε Agent
+const AGENT_CONFIGS = {
+  SECRETARY: {
+    title: "ΓΡΑΜΜΑΤΕΑΣ",
+    bgColor: "0x0000",       // Black
+    headerBg: "0x001F",      // Dark Blue
+    textColor: "0xFFFF",     // White
+    accentColor: "0x07FF",    // Cyan
+    prompt: "Είσαι επαγγελματίας AI Γραμματέας. Δώσε σύντομη περίληψη/εντολή για την οθόνη (έως 12 λέξεις)."
+  },
+  REMINDER: {
+    title: "ΥΠΕΝΘΥΜΙΣΗ",
+    bgColor: "0x0000",       // Black
+    headerBg: "0xFD20",      // Orange
+    textColor: "0xFFFF",     // White
+    accentColor: "0xFFE0",    // Yellow
+    prompt: "Είσαι AI Reminder Bot. Δώσε μια πολύ καθαρή υπενθύμιση/task (έως 10 λέξεις)."
+  },
+  SOCIAL: {
+    title: "SOCIAL MEDIA",
+    bgColor: "0x0000",       // Black
+    headerBg: "0xF81F",      // Pink/Magenta
+    textColor: "0xFFFF",     // White
+    accentColor: "0xF81F",    // Magenta
+    prompt: "Είσαι Social Media Manager Agent. Δημιούργησε ένα catchy headline/caption (έως 10 λέξεις)."
+  }
 };
 
-// System Prompts ανά Agent
-const AGENT_PROMPTS = {
-  SECRETARY: "Είσαι ένας αυστηρός, επαγγελματίας AI Γραμματέας. Ανάλυσε το αίτημα του χρήστη και δώσε μια σύντομη, περιεκτική περίληψη για την οθόνη (μέχρι 15 λέξεις).",
-  REMINDER: "Είσαι ένα AI Reminder Bot. Μετάτρεψε το αίτημα του χρήστη σε μια καθαρή, άμεση υπενθύμιση με checklist ή ώρα (μέχρι 12 λέξεις).",
-  SOCIAL: "Είσαι ένας Social Media Manager Agent. Δημιούργησε ένα δυνατό, catchy headline/caption με βάση το αίτημα (μέχρι 12 λέξεις)."
+let currentAgentState = {
+  agent: "SECRETARY",
+  title: AGENT_CONFIGS.SECRETARY.title,
+  message: "Ετοιμο για εργασιες.",
+  theme: {
+    headerBg: AGENT_CONFIGS.SECRETARY.headerBg,
+    textColor: AGENT_CONFIGS.SECRETARY.textColor,
+    accentColor: AGENT_CONFIGS.SECRETARY.accentColor
+  }
 };
 
 app.get('/api/display', (req, res) => {
-  res.json(currentAgent);
+  res.json(currentAgentState);
 });
 
 app.post('/api/agent/switch', async (req, res) => {
   const { type, prompt } = req.body;
-  const agentType = type || "SECRETARY";
+  const config = AGENT_CONFIGS[type] || AGENT_CONFIGS.SECRETARY;
 
-  try {
-    let aiMessage = prompt;
+  let aiMessage = prompt;
 
-    // Αν υπάρχει API Key, επεξεργαζόμαστε την εντολή μέσω AI
-    if (process.env.GEMINI_API_KEY && prompt) {
+  if (process.env.GEMINI_API_KEY && prompt) {
+    try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
-          systemInstruction: AGENT_PROMPTS[agentType] || AGENT_PROMPTS.SECRETARY,
-          maxOutputTokens: 60,
+          systemInstruction: config.prompt,
+          maxOutputTokens: 50,
         }
       });
       aiMessage = response.text.trim();
+    } catch (err) {
+      console.error("AI Error:", err);
     }
-
-    currentAgent = {
-      agent: agentType,
-      title: agentType === "SECRETARY" ? "Γραμματέας AI" : agentType === "REMINDER" ? "Υπενθύμιση AI" : "Social Media AI",
-      message: aiMessage || "Δεν δόθηκε εντολή."
-    };
-
-    res.json({ status: "success", data: currentAgent });
-  } catch (error) {
-    console.error("AI Generation Error:", error);
-    res.status(500).json({ status: "error", message: error.message });
   }
+
+  currentAgentState = {
+    agent: type,
+    title: config.title,
+    message: aiMessage || "Καμία νέα ειδοποίηση.",
+    theme: {
+      headerBg: config.headerBg,
+      textColor: config.textColor,
+      accentColor: config.accentColor
+    }
+  };
+
+  res.json({ status: "success", data: currentAgentState });
 });
 
 const PORT = process.env.PORT || 3000;
