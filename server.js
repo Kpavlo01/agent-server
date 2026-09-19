@@ -7,38 +7,39 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Αρχική κατάσταση Agents
+// Αρχική κατάσταση Agents (με τα σωστά πεδία για το ESP32)
 let currentAgent = {
-  type: "SECRETARY",
+  agent: "SECRETARY",
   title: "Secretary AI",
   message: "Ready for tasks."
 };
 
-// Endpoints
+// Endpoint για το ESP32
 app.get('/api/display', (req, res) => {
   res.json(currentAgent);
 });
 
+// Endpoint για το Web Panel
 app.post('/api/agent/switch', (req, res) => {
   const { type, prompt } = req.body;
   
   if (type === "SECRETARY") {
     currentAgent = {
-      type: "SECRETARY",
+      agent: "SECRETARY",
       title: "Γραμματέας",
-      message: prompt || "Έλεγχος ραντεβού & emails..."
+      message: prompt || "Έλεγχος ραντεβού..."
     };
   } else if (type === "REMINDER") {
     currentAgent = {
-      type: "REMINDER",
+      agent: "REMINDER",
       title: "Υπενθύμιση",
-      message: prompt || "Μην ξεχάσεις το meeting!"
+      message: prompt || "Μην ξεχάσεις το task!"
     };
   } else if (type === "SOCIAL") {
     currentAgent = {
-      type: "SOCIAL",
+      agent: "SOCIAL",
       title: "Social Media",
-      message: prompt || "Νέο post στο Instagram!"
+      message: prompt || "Νέο post στο Insta!"
     };
   }
   
