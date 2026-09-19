@@ -1,49 +1,65 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const app = express();
+require('dotenv').config();
+const { GoogleGenAI } = require('@google/genai');
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Αρχική κατάσταση Agents (με τα σωστά πεδία για το ESP32)
+// Αρχικοποίηση AI Client (χρειάζεται GEMINI_API_KEY στο Render)
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+
 let currentAgent = {
   agent: "SECRETARY",
-  title: "Secretary AI",
-  message: "Ready for tasks."
+  title: "AI Brain Ready",
+  message: "Awaiting input..."
 };
 
-// Endpoint για το ESP32
+// System Prompts ανά Agent
+const AGENT_PROMPTS = {
+  SECRETARY: "Είσαι ένας αυστηρός, επαγγελματίας AI Γραμματέας. Ανάλυσε το αίτημα του χρήστη και δώσε μια σύντομη, περιεκτική περίληψη για την οθόνη (μέχρι 15 λέξεις).",
+  REMINDER: "Είσαι ένα AI Reminder Bot. Μετάτρεψε το αίτημα του χρήστη σε μια καθαρή, άμεση υπενθύμιση με checklist ή ώρα (μέχρι 12 λέξεις).",
+  SOCIAL: "Είσαι ένας Social Media Manager Agent. Δημιούργησε ένα δυνατό, catchy headline/caption με βάση το αίτημα (μέχρι 12 λέξεις)."
+};
+
 app.get('/api/display', (req, res) => {
   res.json(currentAgent);
 });
 
-// Endpoint για το Web Panel
-app.post('/api/agent/switch', (req, res) => {
+app.post('/api/agent/switch', async (req, res) => {
   const { type, prompt } = req.body;
-  
-  if (type === "SECRETARY") {
+  const agentType = type || "SECRETARY";
+
+  try {
+    let aiMessage = prompt;
+
+    // Αν υπάρχει API Key, επεξεργαζόμαστε την εντολή μέσω AI
+    if (process.env.GEMINI_API_KEY && prompt) {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: AGENT_PROMPTS[agentType] || AGENT_PROMPTS.SECRETARY,
+          maxOutputTokens: 60,
+        }
+      });
+      aiMessage = response.text.trim();
+    }
+
     currentAgent = {
-      agent: "SECRETARY",
-      title: "Γραμματέας",
-      message: prompt || "Έλεγχος ραντεβού..."
+      agent: agentType,
+      title: agentType === "SECRETARY" ? "Γραμματέας AI" : agentType === "REMINDER" ? "Υπενθύμιση AI" : "Social Media AI",
+      message: aiMessage || "Δεν δόθηκε εντολή."
     };
-  } else if (type === "REMINDER") {
-    currentAgent = {
-      agent: "REMINDER",
-      title: "Υπενθύμιση",
-      message: prompt || "Μην ξεχάσεις το task!"
-    };
-  } else if (type === "SOCIAL") {
-    currentAgent = {
-      agent: "SOCIAL",
-      title: "Social Media",
-      message: prompt || "Νέο post στο Insta!"
-    };
+
+    res.json({ status: "success", data: currentAgent });
+  } catch (error) {
+    console.error("AI Generation Error:", error);
+    res.status(500).json({ status: "error", message: error.message });
   }
-  
-  res.json({ status: "success", data: currentAgent });
 });
 
 const PORT = process.env.PORT || 3000;
