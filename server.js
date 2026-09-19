@@ -10,11 +10,10 @@ app.use(express.static('public'));
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
-// Προκαθορισμένα UI Themes για κάθε Agent
 const AGENT_CONFIGS = {
   SECRETARY: {
     title: "ΓΡΑΜΜΑΤΕΑΣ",
-    bgColor: "0x0000",       // Black
+    bgColor: "0x0000",
     headerBg: "0x001F",      // Dark Blue
     textColor: "0xFFFF",     // White
     accentColor: "0x07FF",    // Cyan
@@ -22,7 +21,7 @@ const AGENT_CONFIGS = {
   },
   REMINDER: {
     title: "ΥΠΕΝΘΥΜΙΣΗ",
-    bgColor: "0x0000",       // Black
+    bgColor: "0x0000",
     headerBg: "0xFD20",      // Orange
     textColor: "0xFFFF",     // White
     accentColor: "0xFFE0",    // Yellow
@@ -30,7 +29,7 @@ const AGENT_CONFIGS = {
   },
   SOCIAL: {
     title: "SOCIAL MEDIA",
-    bgColor: "0x0000",       // Black
+    bgColor: "0x0000",
     headerBg: "0xF81F",      // Pink/Magenta
     textColor: "0xFFFF",     // White
     accentColor: "0xF81F",    // Magenta
