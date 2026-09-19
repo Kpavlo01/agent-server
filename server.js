@@ -11,30 +11,28 @@ app.use(express.json());
 app.use(express.static('public'));
 
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
-// State per device
+// State Management
 const devicesState = {
   'DEV_001': {
     agent: "SECRETARY",
-    title: "GRAMMATEAS",
-    message: "Etoimo gia ergaxies.",
+    title: "EXECUTIVE HUB",
+    message: "Systima etoimo gia leitourgia.",
     theme: { headerBg: "0x001F", textColor: "0xFFFF", accentColor: "0x07FF" }
   }
 };
 
-// Dynamic Agent Database Store
+// Dynamic Agents Storage
 const AGENT_CONFIGS = {
   SECRETARY: {
     title: "GRAMMATEAS",
     headerBg: "0x001F",
     textColor: "0xFFFF",
     accentColor: "0x07FF",
-    prompt: "Είσαι AI Γραμματέας. Δώσε σύντομη περίληψη/εντολή για την οθόνη (έως 12 λέξεις)."
+    prompt: "Είσαι AI Γραμματέας. Δώσε σύντομη περίληψη ή εντολή (έως 12 λέξεις)."
   },
   REMINDER: {
     title: "YPENThYMISI",
@@ -56,20 +54,28 @@ const AGENT_CONFIGS = {
     textColor: "0xFFFF",
     accentColor: "0x07E0",
     prompt: "Είσαι Crypto/Market Analyst. Δώσε σύντομο update τιμών ή τάσης (έως 10 λέξεις)."
+  },
+  DIAGNOSTIC: {
+    title: "ECU DIAGNOSTIC",
+    headerBg: "0x7800",
+    textColor: "0xFFFF",
+    accentColor: "0xFDA0",
+    prompt: "Είσαι Automotive Diagnostic Specialist. Δώσε σύντομη διάγνωση/alert (έως 10 λέξεις)."
   }
 };
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('⚡ Client connected:', socket.id);
   socket.emit('display_update', devicesState['DEV_001']);
 });
 
+// REST API για ESP32 Fallback
 app.get('/api/display', (req, res) => {
   const token = req.query.token || 'DEV_001';
   res.json(devicesState[token] || devicesState['DEV_001']);
 });
 
-// Endpoint για Live Crypto Updates (CoinGecko API)
+// Live Crypto Feed (CoinGecko API με Support για BTC, XRP, AERO, GRAM)
 app.get('/api/crypto/live', async (req, res) => {
   try {
     const symbol = (req.query.coin || 'bitcoin').toLowerCase();
@@ -104,12 +110,13 @@ app.get('/api/crypto/live', async (req, res) => {
   }
 });
 
-// Endpoint για Δημιουργία Custom Agent
+// Dynamic Custom Agent Creator Endpoint
 app.post('/api/agent/create', (req, res) => {
   const { id, title, prompt, headerBg, accentColor } = req.body;
-  if (!id || !title) return res.status(400).json({ error: "Missing fields" });
+  if (!id || !title) return res.status(400).json({ error: "Missing required fields" });
 
-  AGENT_CONFIGS[id] = {
+  const agentKey = id.toUpperCase();
+  AGENT_CONFIGS[agentKey] = {
     title: title.toUpperCase(),
     headerBg: headerBg || "0x001F",
     textColor: "0xFFFF",
@@ -117,14 +124,15 @@ app.post('/api/agent/create', (req, res) => {
     prompt: prompt || "Δώσε σύντομο μήνυμα."
   };
 
-  res.json({ status: "success", agent: AGENT_CONFIGS[id] });
+  res.json({ status: "success", agent: AGENT_CONFIGS[agentKey] });
 });
 
+// AI Agent Dispatcher
 app.post('/api/agent/switch', async (req, res) => {
   const { type, prompt, token = 'DEV_001' } = req.body;
   const config = AGENT_CONFIGS[type] || AGENT_CONFIGS.SECRETARY;
 
-  let finalMessage = prompt || "No message provided";
+  let finalMessage = prompt || "Den dothike minima.";
 
   if (process.env.GEMINI_API_KEY && prompt) {
     try {
@@ -140,7 +148,7 @@ app.post('/api/agent/switch', async (req, res) => {
         finalMessage = response.text.trim();
       }
     } catch (err) {
-      console.error("AI Error:", err.message);
+      console.error("AI Generation Error:", err.message);
     }
   }
 
@@ -162,4 +170,4 @@ app.post('/api/agent/switch', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Enterprise Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Production Server Active on Port ${PORT}`));
