@@ -17,6 +17,7 @@ const io = new Server(server, {
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
+// State per device
 const devicesState = {
   'DEV_001': {
     agent: "SECRETARY",
@@ -26,6 +27,7 @@ const devicesState = {
   }
 };
 
+// Dynamic Agent Database Store
 const AGENT_CONFIGS = {
   SECRETARY: {
     title: "GRAMMATEAS",
@@ -57,21 +59,65 @@ const AGENT_CONFIGS = {
   }
 };
 
-// WebSockets Connection logic
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
-  
-  // Στέλνουμε την τρέχουσα κατάσταση αμέσως μόλις συνδεθεί η συσκευή
   socket.emit('display_update', devicesState['DEV_001']);
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
 });
 
 app.get('/api/display', (req, res) => {
   const token = req.query.token || 'DEV_001';
   res.json(devicesState[token] || devicesState['DEV_001']);
+});
+
+// Endpoint για Live Crypto Updates (CoinGecko API)
+app.get('/api/crypto/live', async (req, res) => {
+  try {
+    const symbol = (req.query.coin || 'bitcoin').toLowerCase();
+    const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd&include_24hr_change=true`);
+    const data = await response.json();
+    
+    if (data[symbol]) {
+      const price = data[symbol].usd;
+      const change = data[symbol].usd_24h_change ? data[symbol].usd_24h_change.toFixed(2) : '0';
+      const trend = change >= 0 ? "▲" : "▼";
+      
+      const msg = `${symbol.toUpperCase()}: $${price.toLocaleString()} (${trend} ${change}%)`;
+      
+      const newState = {
+        agent: "CRYPTO",
+        title: "MARKET LIVE",
+        message: msg,
+        theme: {
+          headerBg: change >= 0 ? "0x03E0" : "0xF800",
+          textColor: "0xFFFF",
+          accentColor: change >= 0 ? "0x07E0" : "0xF800"
+        }
+      };
+
+      devicesState['DEV_001'] = newState;
+      io.emit('display_update', newState);
+      return res.json({ status: "success", data: newState });
+    }
+    res.status(400).json({ error: "Coin not found" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint για Δημιουργία Custom Agent
+app.post('/api/agent/create', (req, res) => {
+  const { id, title, prompt, headerBg, accentColor } = req.body;
+  if (!id || !title) return res.status(400).json({ error: "Missing fields" });
+
+  AGENT_CONFIGS[id] = {
+    title: title.toUpperCase(),
+    headerBg: headerBg || "0x001F",
+    textColor: "0xFFFF",
+    accentColor: accentColor || "0x07FF",
+    prompt: prompt || "Δώσε σύντομο μήνυμα."
+  };
+
+  res.json({ status: "success", agent: AGENT_CONFIGS[id] });
 });
 
 app.post('/api/agent/switch', async (req, res) => {
@@ -110,12 +156,10 @@ app.post('/api/agent/switch', async (req, res) => {
   };
 
   devicesState[token] = newState;
-
-  // PUSH ΑΚΑΡΙΑΙΑ ΣΕ ΟΛΟΥΣ ΤΟΥΣ CLIENTS (WebSockets)
   io.emit('display_update', newState);
 
   res.json({ status: "success", agent: type, message: finalMessage });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Real-Time Socket Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Enterprise Server running on port ${PORT}`));

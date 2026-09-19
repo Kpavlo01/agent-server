@@ -3,67 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Agent Enterprise Hub</title>
+  <title>AI Display Command Center</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #0b0c10; color: #c5c6c7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-    .container { display: flex; flex-direction: row; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 950px; width: 100%; }
+    body { background: #0b0c10; color: #c5c6c7; margin: 0; padding: 25px; min-height: 100vh; }
+    .header-title { text-align: center; color: #66fcf1; margin-bottom: 25px; font-size: 26px; }
     
-    .card { background: #1f2833; padding: 28px; border-radius: 16px; border: 1px solid #45a29e; flex: 1; min-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    h2 { margin-top: 0; font-size: 22px; color: #66fcf1; }
-    .input-group { margin-bottom: 15px; }
-    label { font-size: 12px; color: #c5c6c7; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-    input[type="text"], textarea { width: 100%; background: #0b0c10; border: 1px solid #45a29e; color: #fff; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; }
-    textarea { height: 80px; resize: none; }
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; max-width: 1100px; margin: 0 auto; }
+    @media(max-width: 800px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .card { background: #1f2833; padding: 24px; border-radius: 14px; border: 1px solid #45a29e; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    h3 { margin-top: 0; color: #66fcf1; font-size: 18px; border-bottom: 1px solid #45a29e; padding-bottom: 8px; }
     
-    .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-    button { color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; transition: transform 0.1s; }
+    .input-group { margin-bottom: 12px; }
+    label { font-size: 11px; color: #8892b0; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    input[type="text"], textarea { width: 100%; background: #0b0c10; border: 1px solid #45a29e; color: #fff; border-radius: 6px; padding: 10px; font-size: 13px; outline: none; }
+    textarea { height: 70px; resize: none; }
+
+    .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    button { color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; transition: transform 0.1s, opacity 0.2s; }
+    button:hover { opacity: 0.9; }
     button:active { transform: scale(0.97); }
+
     .btn-sec { background: #0066ff; }
     .btn-rem { background: #ff8800; }
     .btn-soc { background: #e91e63; }
     .btn-cry { background: #2e7d32; }
-    #status { margin-top: 15px; font-size: 12px; color: #66fcf1; text-align: center; font-weight: 500; }
+    .btn-action { background: #45a29e; color: #0b0c10; }
 
-    /* Simulator */
-    .simulator-card { background: #1f2833; padding: 28px; border-radius: 16px; border: 1px solid #45a29e; display: flex; flex-direction: column; align-items: center; }
-    .tft-frame { width: 320px; height: 240px; background: #000; border: 10px solid #0b0c10; border-radius: 14px; position: relative; overflow: hidden; box-shadow: 0 0 20px rgba(102, 252, 241, 0.2); }
+    .crypto-bar { display: flex; gap: 8px; margin-top: 10px; }
+    .crypto-btn { flex: 1; background: #112240; border: 1px solid #66fcf1; color: #66fcf1; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+    /* TFT Simulator */
+    .simulator-container { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .tft-frame { width: 320px; height: 240px; background: #000; border: 12px solid #111; border-radius: 16px; position: relative; overflow: hidden; box-shadow: 0 0 25px rgba(102, 252, 241, 0.25); }
     .tft-statusbar { width: 100%; height: 20px; background: #111; color: #888; display: flex; justify-content: space-between; padding: 2px 8px; font-size: 11px; font-family: monospace; }
-    .tft-header { width: 100%; height: 32px; background: #001F; color: #fff; display: flex; align-items: center; padding-left: 10px; font-weight: bold; font-family: monospace; font-size: 15px; }
-    .tft-border { position: absolute; top: 58px; left: 6px; width: 308px; height: 174px; border: 2px solid #07FF; border-radius: 8px; pointer-events: none; }
+    .tft-header { width: 100%; height: 34px; background: #001F; color: #fff; display: flex; align-items: center; padding-left: 10px; font-weight: bold; font-family: monospace; font-size: 15px; }
+    .tft-border { position: absolute; top: 60px; left: 6px; width: 308px; height: 172px; border: 2px solid #07FF; border-radius: 8px; pointer-events: none; }
     .tft-body { padding: 15px; color: #fff; font-family: monospace; font-size: 14px; word-break: break-word; }
+    #status { margin-top: 12px; font-size: 12px; color: #66fcf1; text-align: center; }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="card">
-    <h2>AI Control Center (Real-Time)</h2>
+<div class="header-title">⚡ AI Display Enterprise Hub</div>
+
+<div class="main-grid">
+  <!-- Left Column: Controls & Live Crypto -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
     
-    <div class="input-group">
-      <label>Device Token</label>
-      <input type="text" id="deviceToken" value="DEV_001">
+    <div class="card">
+      <h3>🤖 AI Agent Dispatcher</h3>
+      <div class="input-group">
+        <label>Prompt / Instructions</label>
+        <textarea id="prompt" placeholder="Γράψε εντολή (π.χ. Υπενθύμιση για έλεγχο ECU στις 15:00)..."></textarea>
+      </div>
+
+      <div class="grid-btns">
+        <button class="btn-sec" onclick="setAgent('SECRETARY')">Γραμματέας</button>
+        <button class="btn-rem" onclick="setAgent('REMINDER')">Υπενθυμίσεις</button>
+        <button class="btn-soc" onclick="setAgent('SOCIAL')">Social Media</button>
+        <button class="btn-cry" onclick="setAgent('CRYPTO')">Market Analysis</button>
+      </div>
     </div>
 
-    <div class="input-group">
-      <label>Prompt / Command</label>
-      <textarea id="prompt" placeholder="Γράψε εντολή ή θέμα (π.χ. BTC target 95k ή Reminder για meeting)..."></textarea>
+    <div class="card">
+      <h3>📈 Live Crypto Feed (CoinGecko API)</h3>
+      <p style="font-size: 12px; color: #8892b0; margin-top: 0;">Στείλε live τιμές απευθείας στην οθόνη του ESP32:</p>
+      <div class="crypto-bar">
+        <button class="crypto-btn" onclick="sendLiveCrypto('bitcoin')">BTC</button>
+        <button class="crypto-btn" onclick="sendLiveCrypto('ripple')">XRP</button>
+        <button class="crypto-btn" onclick="sendLiveCrypto('aerodrome-finance')">AERO</button>
+      </div>
     </div>
 
-    <div class="grid-btns">
-      <button class="btn-sec" onclick="setAgent('SECRETARY')">Γραμματέας</button>
-      <button class="btn-rem" onclick="setAgent('REMINDER')">Υπενθυμίσεις</button>
-      <button class="btn-soc" onclick="setAgent('SOCIAL')">Social Media</button>
-      <button class="btn-cry" onclick="setAgent('CRYPTO')">Market Tracker</button>
-    </div>
-    
-    <div id="status">Connected (Live WebSockets)</div>
   </div>
 
-  <!-- Live ESP32 Display Simulator -->
-  <div class="simulator-card">
-    <h2>Live Device Screen</h2>
+  <!-- Right Column: Live TFT Preview -->
+  <div class="card simulator-container">
+    <h3>🖥️ ESP32 Screen Real-Time Mirror</h3>
     <div class="tft-frame">
       <div class="tft-statusbar">
         <span>WS: LIVE</span>
@@ -73,6 +92,7 @@
       <div id="sim-border" class="tft-border"></div>
       <div id="sim-message" class="tft-body">Etoimo gia ergaxies.</div>
     </div>
+    <div id="status">Connected (Socket.io)</div>
   </div>
 </div>
 
@@ -95,29 +115,35 @@
     return `rgb(${Math.round((r * 255) / 31)},${Math.round((g * 255) / 63)},${Math.round((b * 255) / 31)})`;
   }
 
-  // Ακαριαία λήψη updates μέσω WebSockets
   socket.on('display_update', (data) => {
     document.getElementById('sim-header').innerText = data.title || "AGENT";
     document.getElementById('sim-header').style.backgroundColor = hexToCss(data.theme.headerBg);
     document.getElementById('sim-border').style.borderColor = hexToCss(data.theme.accentColor);
     document.getElementById('sim-message').innerText = data.message || "";
     document.getElementById('sim-message').style.color = hexToCss(data.theme.textColor);
-    document.getElementById('status').innerText = "Real-time sync OK!";
+    document.getElementById('status').innerText = "Live Sync Active";
   });
 
   async function setAgent(type) {
     const prompt = document.getElementById('prompt').value;
-    const token = document.getElementById('deviceToken').value;
     document.getElementById('status').innerText = "Επεξεργασία AI...";
-    
     try {
       await fetch('/api/agent/switch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, prompt, token })
+        body: JSON.stringify({ type, prompt, token: 'DEV_001' })
       });
     } catch (e) {
       document.getElementById('status').innerText = "Σφάλμα σύνδεσης.";
+    }
+  }
+
+  async function sendLiveCrypto(coin) {
+    document.getElementById('status').innerText = `Fetching ${coin.toUpperCase()}...`;
+    try {
+      await fetch(`/api/crypto/live?coin=${coin}`);
+    } catch(e) {
+      document.getElementById('status').innerText = "Σφάλμα CoinGecko API.";
     }
   }
 </script>
