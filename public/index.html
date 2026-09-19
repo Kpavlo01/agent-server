@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Agent Enterprise Hub</title>
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #0b0c10; color: #c5c6c7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
@@ -38,26 +39,26 @@
 
 <div class="container">
   <div class="card">
-    <h2>AI Control Center</h2>
+    <h2>AI Control Center (Real-Time)</h2>
     
     <div class="input-group">
-      <label>Device Token (Pairing Key)</label>
+      <label>Device Token</label>
       <input type="text" id="deviceToken" value="DEV_001">
     </div>
 
     <div class="input-group">
       <label>Prompt / Command</label>
-      <textarea id="prompt" placeholder="Γράψε εντολή ή θέμα..."></textarea>
+      <textarea id="prompt" placeholder="Γράψε εντολή ή θέμα (π.χ. BTC target 95k ή Reminder για meeting)..."></textarea>
     </div>
 
     <div class="grid-btns">
       <button class="btn-sec" onclick="setAgent('SECRETARY')">Γραμματέας</button>
       <button class="btn-rem" onclick="setAgent('REMINDER')">Υπενθυμίσεις</button>
       <button class="btn-soc" onclick="setAgent('SOCIAL')">Social Media</button>
-      <button class="btn-cry" onclick="setAgent('CRYPTO')">Market / Crypto</button>
+      <button class="btn-cry" onclick="setAgent('CRYPTO')">Market Tracker</button>
     </div>
     
-    <div id="status">Ready</div>
+    <div id="status">Connected (Live WebSockets)</div>
   </div>
 
   <!-- Live ESP32 Display Simulator -->
@@ -65,7 +66,7 @@
     <h2>Live Device Screen</h2>
     <div class="tft-frame">
       <div class="tft-statusbar">
-        <span>WiFi: OK</span>
+        <span>WS: LIVE</span>
         <span id="sim-clock">12:00</span>
       </div>
       <div id="sim-header" class="tft-header">GRAMMATEAS</div>
@@ -76,6 +77,8 @@
 </div>
 
 <script>
+  const socket = io();
+
   function updateClock() {
     const now = new Date();
     document.getElementById('sim-clock').innerText = now.toTimeString().substring(0,5);
@@ -92,20 +95,15 @@
     return `rgb(${Math.round((r * 255) / 31)},${Math.round((g * 255) / 63)},${Math.round((b * 255) / 31)})`;
   }
 
-  async function updatePreview() {
-    const token = document.getElementById('deviceToken').value;
-    try {
-      const res = await fetch(`/api/display?token=${token}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      
-      document.getElementById('sim-header').innerText = data.title || "AGENT";
-      document.getElementById('sim-header').style.backgroundColor = hexToCss(data.theme.headerBg);
-      document.getElementById('sim-border').style.borderColor = hexToCss(data.theme.accentColor);
-      document.getElementById('sim-message').innerText = data.message || "";
-      document.getElementById('sim-message').style.color = hexToCss(data.theme.textColor);
-    } catch(e) {}
-  }
+  // Ακαριαία λήψη updates μέσω WebSockets
+  socket.on('display_update', (data) => {
+    document.getElementById('sim-header').innerText = data.title || "AGENT";
+    document.getElementById('sim-header').style.backgroundColor = hexToCss(data.theme.headerBg);
+    document.getElementById('sim-border').style.borderColor = hexToCss(data.theme.accentColor);
+    document.getElementById('sim-message').innerText = data.message || "";
+    document.getElementById('sim-message').style.color = hexToCss(data.theme.textColor);
+    document.getElementById('status').innerText = "Real-time sync OK!";
+  });
 
   async function setAgent(type) {
     const prompt = document.getElementById('prompt').value;
@@ -118,15 +116,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, prompt, token })
       });
-      document.getElementById('status').innerText = "Εστάλη στη συσκευή (" + token + ")";
-      updatePreview();
     } catch (e) {
       document.getElementById('status').innerText = "Σφάλμα σύνδεσης.";
     }
   }
-
-  setInterval(updatePreview, 2000);
-  updatePreview();
 </script>
 
 </body>
