@@ -3,54 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Agent Control Panel</title>
+  <title>AI Agent Control Center</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: white; padding: 20px; text-align: center; }
-    .card { background: #1e1e1e; padding: 24px; border-radius: 16px; margin: 20px auto; max-width: 420px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-    h2 { margin-bottom: 20px; font-weight: 600; }
-    textarea { width: 100%; height: 80px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; padding: 12px; font-size: 14px; box-sizing: border-box; resize: none; margin-bottom: 15px; }
-    textarea:focus { outline: none; border-color: #007bff; }
-    button { color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 15px; transition: transform 0.1s, opacity 0.2s; }
-    button:active { transform: scale(0.98); }
-    .btn-secretary { background: #007bff; }
-    .btn-reminder { background: #ff9800; }
-    .btn-social { background: #e91e63; }
-    #status { margin-top: 15px; font-size: 13px; color: #888; height: 18px; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0f0f12; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+    .container { display: flex; flex-direction: row; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 900px; width: 100%; }
+    
+    /* Panel Control */
+    .card { background: #18181c; padding: 24px; border-radius: 20px; border: 1px solid #2a2a32; flex: 1; min-width: 300px; }
+    h2 { margin-top: 0; font-size: 20px; font-weight: 600; color: #ececf1; }
+    textarea { width: 100%; height: 90px; background: #222228; border: 1px solid #3a3a44; color: #fff; border-radius: 12px; padding: 12px; font-size: 14px; resize: none; margin-bottom: 15px; outline: none; }
+    textarea:focus { border-color: #007bff; }
+    button { color: #fff; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 8px; font-weight: 600; font-size: 14px; transition: opacity 0.2s; }
+    button:hover { opacity: 0.9; }
+    .btn-sec { background: #0066ff; }
+    .btn-rem { background: #ff8800; }
+    .btn-soc { background: #e91e63; }
+    #status { margin-top: 12px; font-size: 12px; color: #888; text-align: center; }
+
+    /* TFT Simulator */
+    .simulator-card { background: #18181c; padding: 24px; border-radius: 20px; border: 1px solid #2a2a32; display: flex; flex-direction: column; align-items: center; }
+    .tft-frame { width: 320px; height: 240px; background: #000; border: 12px solid #333; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .tft-header { width: 100%; height: 35px; background: #001F; color: #fff; display: flex; align-items: center; padding-left: 10px; font-weight: bold; font-family: monospace; font-size: 16px; }
+    .tft-border { position: absolute; top: 42px; left: 5px; width: 310px; height: 190px; border: 2px solid #07FF; border-radius: 8px; pointer-events: none; }
+    .tft-body { padding: 15px; color: #fff; font-family: monospace; font-size: 15px; word-break: break-word; }
   </style>
 </head>
 <body>
-  <h2>AI Agent Control Panel</h2>
-  
+
+<div class="container">
+  <!-- Control Form -->
   <div class="card">
-    <textarea id="prompt" placeholder="Γράψε εντολή ή μήνυμα..."></textarea>
-    <button class="btn-secretary" onclick="setAgent('SECRETARY')">Activate Γραμματέας</button>
-    <button class="btn-reminder" onclick="setAgent('REMINDER')">Activate Υπενθυμίσεις</button>
-    <button class="btn-social" onclick="setAgent('SOCIAL')">Activate Social Media</button>
-    <div id="status"></div>
+    <h2>AI Agent Control</h2>
+    <textarea id="prompt" placeholder="Γράψε μια εντολή ή θέμα..."></textarea>
+    <button class="btn-sec" onclick="setAgent('SECRETARY')">Activate Γραμματέας</button>
+    <button class="btn-rem" onclick="setAgent('REMINDER')">Activate Υπενθυμίσεις</button>
+    <button class="btn-soc" onclick="setAgent('SOCIAL')">Activate Social Media</button>
+    <div id="status">Ready</div>
   </div>
 
-  <script>
-    async function setAgent(type) {
-      const prompt = document.getElementById('prompt').value;
-      const status = document.getElementById('status');
-      status.innerText = "Αποστολή εντολής...";
+  <!-- Live ESP32 Display Simulator -->
+  <div class="simulator-card">
+    <h2>Live ESP32 Display</h2>
+    <div class="tft-frame">
+      <div id="sim-header" class="tft-header">GRAMMATEAS</div>
+      <div id="sim-border" class="tft-border"></div>
+      <div id="sim-message" class="tft-body">Etoimo gia ergaxies.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function hexToCss(hexStr) {
+    if(!hexStr) return '#ffffff';
+    let num = parseInt(hexStr, 16);
+    let r = (num >> 11) & 0x1F;
+    let g = (num >> 5) & 0x3F;
+    let b = num & 0x1F;
+    r = Math.round((r * 255) / 31);
+    g = Math.round((g * 255) / 63);
+    b = Math.round((b * 255) / 31);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  async function updatePreview() {
+    try {
+      const res = await fetch('/api/display');
+      const data = await res.json();
       
-      try {
-        const res = await fetch('/api/agent/switch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, prompt })
-        });
-        const data = await res.json();
-        if (data.status === "success") {
-          status.innerText = "Ο Agent " + type + " ενεργοποιήθηκε!";
-          status.style.color = "#4caf50";
-        }
-      } catch (e) {
-        status.innerText = "Σφάλμα σύνδεσης.";
-        status.style.color = "#f44336";
-      }
+      document.getElementById('sim-header').innerText = data.title || "AGENT";
+      document.getElementById('sim-header').style.backgroundColor = hexToCss(data.theme.headerBg);
+      document.getElementById('sim-border').style.borderColor = hexToCss(data.theme.accentColor);
+      document.getElementById('sim-message').innerText = data.message || "";
+      document.getElementById('sim-message').style.color = hexToCss(data.theme.textColor);
+    } catch(e) {}
+  }
+
+  async function setAgent(type) {
+    const prompt = document.getElementById('prompt').value;
+    document.getElementById('status').innerText = "Επεξεργασία AI...";
+    
+    try {
+      await fetch('/api/agent/switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, prompt })
+      });
+      document.getElementById('status').innerText = "Εστάλη στην οθόνη!";
+      updatePreview();
+    } catch (e) {
+      document.getElementById('status').innerText = "Σφάλμα σύνδεσης.";
     }
-  </script>
+  }
+
+  setInterval(updatePreview, 2000);
+  updatePreview();
+</script>
+
 </body>
 </html>
