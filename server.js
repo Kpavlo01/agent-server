@@ -21,11 +21,12 @@ const devicesState = {
     agent: "SECRETARY",
     title: "EXECUTIVE HUB",
     message: "Systima etoimo gia leitourgia.",
-    theme: { headerBg: "0x001F", textColor: "0xFFFF", accentColor: "0x07FF" }
+    theme: { headerBg: "0x001F", textColor: "0xFFFF", accentColor: "0x07FF" },
+    alertSound: false
   }
 };
 
-// Dynamic Agents Storage
+// Agents Configuration Database
 const AGENT_CONFIGS = {
   SECRETARY: {
     title: "GRAMMATEAS",
@@ -41,63 +42,94 @@ const AGENT_CONFIGS = {
     accentColor: "0xFFE0",
     prompt: "Είσαι AI Reminder Bot. Δώσε μια πολύ καθαρή υπενθύμιση (έως 10 λέξεις)."
   },
-  SOCIAL: {
-    title: "SOCIAL MEDIA",
-    headerBg: "0xF81F",
-    textColor: "0xFFFF",
-    accentColor: "0xF81F",
-    prompt: "Είσαι Social Media Manager. Δημιούργησε ένα catchy headline (έως 10 λέξεις)."
-  },
   CRYPTO: {
     title: "MARKET TRACKER",
     headerBg: "0x03E0",
     textColor: "0xFFFF",
     accentColor: "0x07E0",
-    prompt: "Είσαι Crypto/Market Analyst. Δώσε σύντομο update τιμών ή τάσης (έως 10 λέξεις)."
+    prompt: "Είσαι Crypto Analyst. Δώσε σύντομο update τιμών ή τάσης (έως 10 λέξεις)."
   },
-  DIAGNOSTIC: {
+  ECU_DIAG: {
     title: "ECU DIAGNOSTIC",
     headerBg: "0x7800",
     textColor: "0xFFFF",
     accentColor: "0xFDA0",
-    prompt: "Είσαι Automotive Diagnostic Specialist. Δώσε σύντομη διάγνωση/alert (έως 10 λέξεις)."
+    prompt: "Είσαι Automotive Diagnostic Specialist σε ECU programming, επισκευές πλακετών και μπαταριές. Δώσε σύντομη διάγνωση/alert (έως 10 λέξεις)."
+  },
+  CALENDAR: {
+    title: "CALENDAR SYNC",
+    headerBg: "0x0015",
+    textColor: "0xFFFF",
+    accentColor: "0x3A8F",
+    prompt: "Είσαι Google Calendar Assistant. Πρόβαλε το επόμενο σημαντικό ραντεβού (έως 10 λέξεις)."
   }
 };
+
+let currentAgentIndex = 0;
+const agentKeys = Object.keys(AGENT_CONFIGS);
 
 io.on('connection', (socket) => {
   console.log('⚡ Client connected:', socket.id);
   socket.emit('display_update', devicesState['DEV_001']);
+
+  // Physical Button Event από το ESP32
+  socket.on('button_click', (data) => {
+    if (data.action === 'NEXT') {
+      currentAgentIndex = (currentAgentIndex + 1) % agentKeys.length;
+    } else if (data.action === 'PREV') {
+      currentAgentIndex = (currentAgentIndex - 1 + agentKeys.length) % agentKeys.length;
+    }
+    const selectedAgent = agentKeys[currentAgentIndex];
+    const config = AGENT_CONFIGS[selectedAgent];
+
+    const newState = {
+      agent: selectedAgent,
+      title: config.title,
+      message: `Active: ${config.title}`,
+      theme: { headerBg: config.headerBg, textColor: config.textColor, accentColor: config.accentColor },
+      alertSound: false
+    };
+
+    devicesState['DEV_001'] = newState;
+    io.emit('display_update', newState);
+  });
 });
 
-// REST API για ESP32 Fallback
 app.get('/api/display', (req, res) => {
   const token = req.query.token || 'DEV_001';
   res.json(devicesState[token] || devicesState['DEV_001']);
 });
 
-// Live Crypto Feed (CoinGecko API με Support για BTC, XRP, AERO, GRAM)
-app.get('/api/crypto/live', async (req, res) => {
+// Live Crypto Feed & Stop-Loss/Take-Profit Alert Engine
+app.post('/api/crypto/alert-check', async (req, res) => {
   try {
-    const symbol = (req.query.coin || 'bitcoin').toLowerCase();
+    const { coin = 'bitcoin', tp, sl } = req.body;
+    const symbol = coin.toLowerCase();
     const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd&include_24hr_change=true`);
     const data = await response.json();
-    
+
     if (data[symbol]) {
       const price = data[symbol].usd;
       const change = data[symbol].usd_24h_change ? data[symbol].usd_24h_change.toFixed(2) : '0';
-      const trend = change >= 0 ? "▲" : "▼";
-      
-      const msg = `${symbol.toUpperCase()}: $${price.toLocaleString()} (${trend} ${change}%)`;
-      
+      let alertState = "NORMAL";
+      let headerColor = change >= 0 ? "0x03E0" : "0xF800";
+
+      if (tp && price >= parseFloat(tp)) {
+        alertState = "TAKE PROFIT HIT 🎯";
+        headerColor = "0x07E0"; // Bright Green
+      } else if (sl && price <= parseFloat(sl)) {
+        alertState = "STOP LOSS HIT ⚠️";
+        headerColor = "0xF800"; // Red
+      }
+
+      const msg = `${symbol.toUpperCase()}: $${price} (${change}%)\n${alertState !== 'NORMAL' ? alertState : 'Trading Active'}`;
+
       const newState = {
         agent: "CRYPTO",
-        title: "MARKET LIVE",
+        title: alertState !== 'NORMAL' ? "CRITICAL ALERT" : "MARKET LIVE",
         message: msg,
-        theme: {
-          headerBg: change >= 0 ? "0x03E0" : "0xF800",
-          textColor: "0xFFFF",
-          accentColor: change >= 0 ? "0x07E0" : "0xF800"
-        }
+        theme: { headerBg: headerColor, textColor: "0xFFFF", accentColor: headerColor },
+        alertSound: alertState !== 'NORMAL'
       };
 
       devicesState['DEV_001'] = newState;
@@ -110,29 +142,12 @@ app.get('/api/crypto/live', async (req, res) => {
   }
 });
 
-// Dynamic Custom Agent Creator Endpoint
-app.post('/api/agent/create', (req, res) => {
-  const { id, title, prompt, headerBg, accentColor } = req.body;
-  if (!id || !title) return res.status(400).json({ error: "Missing required fields" });
-
-  const agentKey = id.toUpperCase();
-  AGENT_CONFIGS[agentKey] = {
-    title: title.toUpperCase(),
-    headerBg: headerBg || "0x001F",
-    textColor: "0xFFFF",
-    accentColor: accentColor || "0x07FF",
-    prompt: prompt || "Δώσε σύντομο μήνυμα."
-  };
-
-  res.json({ status: "success", agent: AGENT_CONFIGS[agentKey] });
-});
-
-// AI Agent Dispatcher
+// Dispatcher για AI Agents
 app.post('/api/agent/switch', async (req, res) => {
   const { type, prompt, token = 'DEV_001' } = req.body;
   const config = AGENT_CONFIGS[type] || AGENT_CONFIGS.SECRETARY;
 
-  let finalMessage = prompt || "Den dothike minima.";
+  let finalMessage = prompt || "No message provided";
 
   if (process.env.GEMINI_API_KEY && prompt) {
     try {
@@ -148,7 +163,7 @@ app.post('/api/agent/switch', async (req, res) => {
         finalMessage = response.text.trim();
       }
     } catch (err) {
-      console.error("AI Generation Error:", err.message);
+      console.error("AI Error:", err.message);
     }
   }
 
@@ -156,11 +171,8 @@ app.post('/api/agent/switch', async (req, res) => {
     agent: type,
     title: config.title,
     message: finalMessage,
-    theme: {
-      headerBg: config.headerBg,
-      textColor: config.textColor,
-      accentColor: config.accentColor
-    }
+    theme: { headerBg: config.headerBg, textColor: config.textColor, accentColor: config.accentColor },
+    alertSound: false
   };
 
   devicesState[token] = newState;
@@ -170,4 +182,4 @@ app.post('/api/agent/switch', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Production Server Active on Port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Multi-Agent Command Hub Active on Port ${PORT}`));

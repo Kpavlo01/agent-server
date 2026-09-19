@@ -3,111 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Display Command Center - Pro Edition</title>
+  <title>Autonomous Multi-Agent Command Center</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #08090a; color: #d1d5db; margin: 0; padding: 25px; min-height: 100vh; }
+    body { background: #07090e; color: #d1d5db; margin: 0; padding: 25px; min-height: 100vh; }
     
     .top-header { text-align: center; margin-bottom: 25px; }
-    .top-header h1 { color: #64ffda; margin: 0; font-size: 28px; letter-spacing: 1px; }
-    .top-header p { color: #8892b0; margin-top: 5px; font-size: 13px; }
+    .top-header h1 { color: #00f2fe; margin: 0; font-size: 28px; letter-spacing: 1px; }
 
     .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; max-width: 1200px; margin: 0 auto; }
     @media(max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
-    .card { background: #112240; padding: 22px; border-radius: 12px; border: 1px solid #233554; box-shadow: 0 10px 30px -15px rgba(2,12,27,0.7); }
-    .card h3 { margin-top: 0; color: #64ffda; font-size: 17px; border-bottom: 1px solid #233554; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .card { background: #0f172a; padding: 22px; border-radius: 14px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .card h3 { margin-top: 0; color: #00f2fe; font-size: 16px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
 
-    .input-group { margin-bottom: 15px; }
-    label { font-size: 11px; color: #8892b0; display: block; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-    input[type="text"], textarea, select { width: 100%; background: #0a192f; border: 1px solid #233554; color: #e6f1ff; border-radius: 6px; padding: 10px; font-size: 13px; outline: none; transition: border 0.2s; }
-    input[type="text"]:focus, textarea:focus { border-color: #64ffda; }
-    textarea { height: 75px; resize: none; }
+    .input-group { margin-bottom: 12px; }
+    label { font-size: 11px; color: #64748b; display: block; margin-bottom: 4px; text-transform: uppercase; font-weight: bold; }
+    input[type="text"], textarea { width: 100%; background: #020617; border: 1px solid #1e293b; color: #f8fafc; border-radius: 6px; padding: 10px; font-size: 13px; outline: none; }
+    textarea { height: 70px; resize: none; }
 
-    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    button { color: #fff; border: none; padding: 11px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; transition: all 0.2s; }
-    button:hover { filter: brightness(1.15); transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    button { color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; transition: transform 0.1s; }
+    button:active { transform: scale(0.97); }
 
-    .btn-sec { background: #1d4ed8; }
+    .btn-sec { background: #2563eb; }
     .btn-rem { background: #d97706; }
-    .btn-soc { background: #db2777; }
     .btn-cry { background: #059669; }
-    .btn-diag { background: #7c3aed; }
-    .btn-create { background: #64ffda; color: #0a192f; width: 100%; margin-top: 10px; font-size: 13px; }
+    .btn-ecu { background: #dc2626; }
+    .btn-cal { background: #7c3aed; }
 
-    .crypto-flex { display: flex; gap: 8px; margin-top: 10px; }
-    .crypto-btn { flex: 1; background: #0a192f; border: 1px solid #64ffda; color: #64ffda; padding: 9px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    /* Crypto Alert Inputs */
+    .crypto-alert-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
 
-    /* TFT Hardware Simulator */
+    /* TFT Simulator */
     .simulator-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .tft-bezel { width: 330px; height: 250px; background: #1a1a1a; border-radius: 18px; padding: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.05); }
+    .tft-bezel { width: 330px; height: 250px; background: #18181b; border-radius: 16px; padding: 12px; border: 2px solid #27272a; }
     .tft-screen { width: 306px; height: 226px; background: #000; position: relative; overflow: hidden; border-radius: 4px; }
-    .tft-topbar { width: 100%; height: 18px; background: #000; color: #10b981; display: flex; justify-content: space-between; padding: 2px 8px; font-size: 10px; font-family: monospace; border-bottom: 1px solid #111; }
+    .tft-topbar { width: 100%; height: 18px; background: #000; color: #22c55e; display: flex; justify-content: space-between; padding: 2px 8px; font-size: 10px; font-family: monospace; }
     .tft-header { width: 100%; height: 34px; background: #001F; color: #fff; display: flex; align-items: center; padding-left: 10px; font-weight: bold; font-family: monospace; font-size: 14px; }
     .tft-border { position: absolute; top: 58px; left: 4px; width: 294px; height: 162px; border: 2px solid #07FF; border-radius: 8px; pointer-events: none; }
-    .tft-content { padding: 12px; color: #fff; font-family: monospace; font-size: 13px; word-break: break-word; line-height: 1.4; }
-    
-    #status-badge { margin-top: 15px; font-size: 12px; padding: 4px 12px; border-radius: 12px; background: rgba(100,255,218,0.1); color: #64ffda; border: 1px solid #64ffda; }
+    .tft-content { padding: 12px; color: #fff; font-family: monospace; font-size: 13px; word-break: break-word; white-space: pre-line; }
   </style>
 </head>
 <body>
 
 <div class="top-header">
-  <h1>⚡ AI Display Command Center</h1>
-  <p>Enterprise Management Hub & Real-time Hardware Controller</p>
+  <h1>⚡ Autonomous Command Hub</h1>
 </div>
 
 <div class="dashboard-grid">
   
-  <!-- Left Panel: Agents & Custom Builder -->
   <div style="display: flex; flex-direction: column; gap: 20px;">
     
+    <!-- AI Dispatcher -->
     <div class="card">
       <h3>🤖 AI Agent Dispatcher</h3>
       <div class="input-group">
-        <label>Prompt / Εντολή προς AI</label>
-        <textarea id="prompt" placeholder="Γράψε εντολή (π.χ. Έλεγχος χάρτη καυσίμου ECU ή Υπενθύμιση)..."></textarea>
+        <label>Prompt / Εντολή</label>
+        <textarea id="prompt" placeholder="Γράψε εντολή για Γραμματέα, ECU Diagnostic, Calendar ή Reminder..."></textarea>
       </div>
 
       <div class="btn-grid">
         <button class="btn-sec" onclick="setAgent('SECRETARY')">Γραμματέας</button>
         <button class="btn-rem" onclick="setAgent('REMINDER')">Υπενθύμιση</button>
-        <button class="btn-soc" onclick="setAgent('SOCIAL')">Social Media</button>
-        <button class="btn-cry" onclick="setAgent('CRYPTO')">Market Analysis</button>
-        <button class="btn-diag" style="grid-column: span 2" onclick="setAgent('DIAGNOSTIC')">ECU Diagnostic Specialist</button>
+        <button class="btn-ecu" onclick="setAgent('ECU_DIAG')">ECU Specialist</button>
+        <button class="btn-cal" onclick="setAgent('CALENDAR')">Calendar Sync</button>
       </div>
     </div>
 
+    <!-- Crypto Target Alerts -->
     <div class="card">
-      <h3>📈 Live Crypto Feed (CoinGecko API)</h3>
-      <div class="crypto-flex">
-        <button class="crypto-btn" onclick="sendLiveCrypto('bitcoin')">BTC</button>
-        <button class="crypto-btn" onclick="sendLiveCrypto('ripple')">XRP</button>
-        <button class="crypto-btn" onclick="sendLiveCrypto('aerodrome-finance')">AERO</button>
+      <h3>📈 Crypto Trading & Target Alert Engine</h3>
+      <div class="crypto-alert-grid">
+        <input type="text" id="coin-id" placeholder="Coin (e.g. bitcoin, aerodrome-finance, ripple)">
+        <input type="text" id="tp-price" placeholder="Take Profit ($)">
+        <input type="text" id="sl-price" placeholder="Stop Loss ($)">
       </div>
-    </div>
-
-    <div class="card">
-      <h3>🛠️ Custom Agent Builder</h3>
-      <div class="input-group">
-        <label>Agent ID & Title</label>
-        <input type="text" id="cust-title" placeholder="π.χ. WORKSHOP_BOT">
-      </div>
-      <div class="input-group">
-        <label>System Prompt Instruction</label>
-        <input type="text" id="cust-prompt" placeholder="π.χ. Είσαι μηχανικός αυτοκινήτων...">
-      </div>
-      <button class="btn-create" onclick="createCustomAgent()">+ Δημιουργία Agent</button>
+      <button class="btn-cry" style="width: 100%; margin-top: 10px;" onclick="checkCryptoAlert()">Έλεγχος & Αποστολή Alert στην Οθόνη</button>
     </div>
 
   </div>
 
-  <!-- Right Panel: Hardware Simulator -->
+  <!-- Hardware Simulator -->
   <div class="card simulator-wrapper">
-    <h3>🖥️ ESP32 Live Display Mirror</h3>
-    
+    <h3>🖥️ ESP32 Hardware Real-Time Screen</h3>
     <div class="tft-bezel">
       <div class="tft-screen">
         <div class="tft-topbar">
@@ -119,8 +99,6 @@
         <div id="sim-message" class="tft-content">Systima etoimo gia leitourgia.</div>
       </div>
     </div>
-
-    <div id="status-badge">● Socket.io Connected</div>
   </div>
 
 </div>
@@ -154,40 +132,23 @@
 
   async function setAgent(type) {
     const prompt = document.getElementById('prompt').value;
-    try {
-      await fetch('/api/agent/switch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, prompt, token: 'DEV_001' })
-      });
-    } catch (e) {
-      alert("Σφάλμα επικοινωνίας με τον server.");
-    }
+    await fetch('/api/agent/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, prompt, token: 'DEV_001' })
+    });
   }
 
-  async function sendLiveCrypto(coin) {
-    try {
-      await fetch(`/api/crypto/live?coin=${coin}`);
-    } catch(e) {
-      alert("Σφάλμα κατά την ανάκτηση τιμής crypto.");
-    }
-  }
+  async function checkCryptoAlert() {
+    const coin = document.getElementById('coin-id').value || 'bitcoin';
+    const tp = document.getElementById('tp-price').value;
+    const sl = document.getElementById('sl-price').value;
 
-  async function createCustomAgent() {
-    const title = document.getElementById('cust-title').value;
-    const prompt = document.getElementById('cust-prompt').value;
-    if(!title) return alert("Συμπλήρωσε τίτλο!");
-
-    try {
-      await fetch('/api/agent/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: title, title, prompt })
-      });
-      alert(`Ο Agent '${title}' δημιουργήθηκε επιτυχώς!`);
-    } catch(e) {
-      alert("Σφάλμα δημιουργίας Agent.");
-    }
+    await fetch('/api/crypto/alert-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ coin, tp, sl })
+    });
   }
 </script>
 
