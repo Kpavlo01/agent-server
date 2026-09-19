@@ -5,32 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Agent Control Panel</title>
   <style>
-    body { font-family: sans-serif; background: #121212; color: white; padding: 20px; text-align: center; }
-    .card { background: #1e1e1e; padding: 20px; border-radius: 12px; margin: 15px auto; max-width: 400px; }
-    button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
-    textarea { width: 95%; height: 60px; margin-top: 10px; border-radius: 6px; padding: 8px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: white; padding: 20px; text-align: center; }
+    .card { background: #1e1e1e; padding: 24px; border-radius: 16px; margin: 20px auto; max-width: 420px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    h2 { margin-bottom: 20px; font-weight: 600; }
+    textarea { width: 100%; height: 80px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; padding: 12px; font-size: 14px; box-sizing: border-box; resize: none; margin-bottom: 15px; }
+    textarea:focus { outline: none; border-color: #007bff; }
+    button { color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; font-size: 15px; transition: transform 0.1s, opacity 0.2s; }
+    button:active { transform: scale(0.98); }
+    .btn-secretary { background: #007bff; }
+    .btn-reminder { background: #ff9800; }
+    .btn-social { background: #e91e63; }
+    #status { margin-top: 15px; font-size: 13px; color: #888; height: 18px; }
   </style>
 </head>
 <body>
   <h2>AI Agent Control Panel</h2>
   
   <div class="card">
-    <h3>Επιλογή Agent</h3>
     <textarea id="prompt" placeholder="Γράψε εντολή ή μήνυμα..."></textarea>
-    <button onclick="setAgent('SECRETARY')"> Activate Γραμματέας</button>
-    <button onclick="setAgent('REMINDER')" style="background:#ff9800;"> Activate Υπενθυμίσεις</button>
-    <button onclick="setAgent('SOCIAL')" style="background:#e91e63;"> Activate Social Media</button>
+    <button class="btn-secretary" onclick="setAgent('SECRETARY')">Activate Γραμματέας</button>
+    <button class="btn-reminder" onclick="setAgent('REMINDER')">Activate Υπενθυμίσεις</button>
+    <button class="btn-social" onclick="setAgent('SOCIAL')">Activate Social Media</button>
+    <div id="status"></div>
   </div>
 
   <script>
     async function setAgent(type) {
       const prompt = document.getElementById('prompt').value;
-      await fetch('/api/agent/switch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, prompt })
-      });
-      alert('Ο Agent ενεργοποιήθηκε! Η οθόνη θα ενημερωθεί.');
+      const status = document.getElementById('status');
+      status.innerText = "Αποστολή εντολής...";
+      
+      try {
+        const res = await fetch('/api/agent/switch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, prompt })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          status.innerText = "Ο Agent " + type + " ενεργοποιήθηκε!";
+          status.style.color = "#4caf50";
+        }
+      } catch (e) {
+        status.innerText = "Σφάλμα σύνδεσης.";
+        status.style.color = "#f44336";
+      }
     }
   </script>
 </body>

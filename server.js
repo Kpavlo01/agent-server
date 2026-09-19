@@ -12,35 +12,32 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const AGENT_CONFIGS = {
   SECRETARY: {
-    title: "ΓΡΑΜΜΑΤΕΑΣ",
-    bgColor: "0x0000",
+    title: "GRAMMATEAS",
     headerBg: "0x001F",      // Dark Blue
     textColor: "0xFFFF",     // White
     accentColor: "0x07FF",    // Cyan
-    prompt: "Είσαι επαγγελματίας AI Γραμματέας. Δώσε σύντομη περίληψη/εντολή για την οθόνη (έως 12 λέξεις)."
+    prompt: "Είσαι AI Γραμματέας. Δώσε σύντομη περίληψη/εντολή για την οθόνη (έως 12 λέξεις)."
   },
   REMINDER: {
-    title: "ΥΠΕΝΘΥΜΙΣΗ",
-    bgColor: "0x0000",
+    title: "YPENThYMISI",
     headerBg: "0xFD20",      // Orange
     textColor: "0xFFFF",     // White
     accentColor: "0xFFE0",    // Yellow
-    prompt: "Είσαι AI Reminder Bot. Δώσε μια πολύ καθαρή υπενθύμιση/task (έως 10 λέξεις)."
+    prompt: "Είσαι AI Reminder Bot. Δώσε μια πολύ καθαρή υπενθύμιση (έως 10 λέξεις)."
   },
   SOCIAL: {
     title: "SOCIAL MEDIA",
-    bgColor: "0x0000",
-    headerBg: "0xF81F",      // Pink/Magenta
+    headerBg: "0xF81F",      // Magenta
     textColor: "0xFFFF",     // White
     accentColor: "0xF81F",    // Magenta
-    prompt: "Είσαι Social Media Manager Agent. Δημιούργησε ένα catchy headline/caption (έως 10 λέξεις)."
+    prompt: "Είσαι Social Media Manager Agent. Δημιούργησε ένα catchy headline (έως 10 λέξεις)."
   }
 };
 
 let currentAgentState = {
   agent: "SECRETARY",
   title: AGENT_CONFIGS.SECRETARY.title,
-  message: "Ετοιμο για εργασιες.",
+  message: "Etoimo gia ergaxies.",
   theme: {
     headerBg: AGENT_CONFIGS.SECRETARY.headerBg,
     textColor: AGENT_CONFIGS.SECRETARY.textColor,
@@ -56,8 +53,9 @@ app.post('/api/agent/switch', async (req, res) => {
   const { type, prompt } = req.body;
   const config = AGENT_CONFIGS[type] || AGENT_CONFIGS.SECRETARY;
 
-  let aiMessage = prompt;
+  let finalMessage = prompt || "No message provided";
 
+  // Δοκιμή κλήσης AI με ασφαλή διαχείριση σφαλμάτων
   if (process.env.GEMINI_API_KEY && prompt) {
     try {
       const response = await ai.models.generateContent({
@@ -68,16 +66,18 @@ app.post('/api/agent/switch', async (req, res) => {
           maxOutputTokens: 50,
         }
       });
-      aiMessage = response.text.trim();
+      if (response && response.text) {
+        finalMessage = response.text.trim();
+      }
     } catch (err) {
-      console.error("AI Error:", err);
+      console.error("AI Error (Falling back to raw prompt):", err.message);
     }
   }
 
   currentAgentState = {
     agent: type,
     title: config.title,
-    message: aiMessage || "Καμία νέα ειδοποίηση.",
+    message: finalMessage,
     theme: {
       headerBg: config.headerBg,
       textColor: config.textColor,
