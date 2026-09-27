@@ -1,190 +1,147 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Autonomous Command Hub v3.0 - Enterprise</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Command Hub v6.0 Ultra</title>
   <script src="/socket.io/socket.io.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
-      --bg-dark: #030712;
-      --panel-bg: rgba(17, 24, 39, 0.7);
-      --border-color: rgba(255, 255, 255, 0.08);
-      --border-active: rgba(0, 242, 254, 0.4);
+      --bg: #05070a;
+      --card-bg: rgba(15, 20, 31, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
       --cyan: #00f2fe;
-      --blue: #3b82f6;
-      --purple: #8b5cf6;
+      --purple: #9d4edd;
       --amber: #f59e0b;
-      --red: #ef4444;
       --green: #10b981;
-      --text-main: #f9fafb;
-      --text-muted: #9ca3af;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --muted: #64748b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; padding: 20px; overflow-x: hidden; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px; display: flex; justify-content: center; }
 
+    .container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* HEADER */
     header {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px); padding: 18px 24px; border-radius: 16px;
       display: flex; justify-content: space-between; align-items: center;
-      background: var(--panel-bg); border: 1px solid var(--border-color);
-      backdrop-filter: blur(16px); padding: 14px 28px; border-radius: 16px; margin-bottom: 24px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand i { color: var(--cyan); font-size: 24px; filter: drop-shadow(0 0 8px var(--cyan)); }
-    .brand h1 { font-size: 20px; font-weight: 700; letter-spacing: 1.5px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.1rem; letter-spacing: 2px; color: var(--cyan); }
+    .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); }
 
-    .crypto-ticker { display: flex; gap: 16px; flex-wrap: wrap; }
-    .ticker-chip {
-      background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color);
-      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: monospace; display: flex; align-items: center; gap: 8px;
+    /* TICKERS */
+    .tickers { display: flex; gap: 12px; }
+    .t-card {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--card-border);
+      padding: 6px 14px; border-radius: 10px; font-family: monospace; font-size: 0.85rem;
+      display: flex; align-items: center; gap: 8px;
     }
-    .ticker-chip span.val { color: #fff; font-weight: bold; }
 
-    .grid-container {
-      display: grid; grid-template-columns: 1fr 400px; gap: 24px; max-width: 1440px; margin: 0 auto;
+    /* GRID */
+    .grid { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 20px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    /* CARDS */
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px); border-radius: 20px; padding: 24px;
+      display: flex; flex-direction: column; gap: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     }
-    @media (max-width: 1080px) { .grid-container { grid-template-columns: 1fr; } }
+    .card-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--cyan); display: flex; align-items: center; gap: 8px; }
 
-    .panel {
-      background: var(--panel-bg); border: 1px solid var(--border-color);
-      backdrop-filter: blur(16px); border-radius: 18px; padding: 22px; margin-bottom: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: border-color 0.3s, box-shadow 0.3s;
+    /* PRESETS */
+    .presets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .p-btn {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+      color: var(--text); padding: 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .panel:hover { border-color: var(--border-active); box-shadow: 0 10px 30px rgba(0, 242, 254, 0.05); }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
-    .panel-header h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--cyan); display: flex; align-items: center; gap: 10px; }
+    .p-btn:hover { background: var(--cyan); color: #000; font-weight: 700; }
 
-    .input-group { margin-bottom: 14px; }
-    label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
-    textarea, input {
-      width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color);
-      border-radius: 10px; padding: 12px; color: #fff; font-size: 13px; outline: none; transition: 0.2s;
+    /* INPUTS */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    input, textarea, select {
+      background: rgba(0,0,0,0.5); border: 1px solid var(--card-border);
+      border-radius: 10px; padding: 12px; color: #fff; font-size: 0.9rem; outline: none; transition: 0.2s;
     }
-    textarea:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0, 242, 254, 0.25); }
+    input:focus, textarea:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0, 242, 254, 0.2); }
 
-    .action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .btn-action {
-      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color);
-      color: #fff; padding: 14px; border-radius: 10px; font-size: 12px; font-weight: 600;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s;
+    .btn-send {
+      background: var(--cyan); color: #000; font-weight: 800; border: none;
+      padding: 14px; border-radius: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;
+      transition: all 0.2s;
     }
-    .btn-action:hover { background: var(--cyan); color: #000; box-shadow: 0 0 20px var(--cyan); font-weight: 700; }
+    .btn-send:hover { box-shadow: 0 0 20px var(--cyan); opacity: 0.9; }
 
-    .dtc-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-    .dtc-tag {
-      background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3);
-      color: var(--blue); padding: 5px 12px; border-radius: 8px; font-size: 11px; font-family: monospace; cursor: pointer; transition: 0.2s;
+    /* DISPLAY MIRROR */
+    .esp-preview {
+      background: #000; border: 2px solid var(--cyan); border-radius: 14px;
+      padding: 20px; min-height: 180px; position: relative; box-shadow: 0 0 25px rgba(0, 242, 254, 0.15);
     }
-    .dtc-tag:hover { background: var(--blue); color: #fff; box-shadow: 0 0 10px var(--blue); }
-
-    .simulator-box { display: flex; flex-direction: column; align-items: center; }
-    .hardware-frame {
-      width: 320px; height: 240px; background: #000; border: 14px solid #111827;
-      border-radius: 16px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 242, 254, 0.15);
-      position: relative; overflow: hidden; display: flex; flex-direction: column;
-    }
-    .tft-top { height: 36px; background: var(--blue); color: #fff; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; font-weight: bold; font-size: 13px; font-family: monospace; }
-    .tft-body { flex: 1; padding: 10px; position: relative; background: #000; }
-    .tft-card { border: 2px solid var(--cyan); border-radius: 8px; height: 100%; padding: 12px; color: #fff; font-family: monospace; font-size: 12px; line-height: 1.5; word-break: break-word; }
-
-    .log-list { font-family: monospace; font-size: 11px; max-height: 160px; overflow-y: auto; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; }
-    .log-item { padding: 6px 10px; background: rgba(0,0,0,0.3); border-radius: 6px; border-left: 3px solid var(--border-color); }
-    .log-item.success { border-left-color: var(--green); color: #d1fae5; }
-    .log-item.info { border-left-color: var(--cyan); color: #e0f2fe; }
+    .prev-head { font-size: 0.75rem; font-family: monospace; color: var(--cyan); margin-bottom: 8px; }
+    .prev-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
+    .prev-body { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; white-space: pre-wrap; }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="brand">
-      <i class="fa-solid fa-microchip"></i>
-      <h1>AUTONOMOUS COMMAND HUB</h1>
-    </div>
-    <div class="crypto-ticker">
-      <div class="ticker-chip"><span style="color:var(--amber)">BTC</span> <span class="val" id="ticker-btc">Loading...</span></div>
-      <div class="ticker-chip"><span style="color:var(--cyan)">XRP</span> <span class="val" id="ticker-xrp">Loading...</span></div>
-      <div class="ticker-chip"><span style="color:var(--purple)">AERO</span> <span class="val" id="ticker-aero">Loading...</span></div>
-    </div>
-  </header>
+  <div class="container">
+    <header>
+      <div class="brand"><div class="status-dot"></div>COMMAND CENTER v6.0</div>
+      <div class="tickers">
+        <div class="t-card"><span style="color:var(--amber)">BTC</span><span id="btc-val">$0.00</span></div>
+        <div class="t-card"><span style="color:var(--cyan)">XRP</span><span id="xrp-val">$0.00</span></div>
+        <div class="t-card"><span style="color:var(--purple)">AERO</span><span id="aero-val">$0.00</span></div>
+      </div>
+    </header>
 
-  <div class="grid-container">
-    <div>
-      <div class="panel">
-        <div class="panel-header">
-          <h2><i class="fa-solid fa-robot"></i> AI Agent Dispatcher Engine</h2>
-          <span style="font-size:11px; color:var(--text-muted)">v3.0 Enterprise</span>
-        </div>
-        <div class="input-group">
-          <label>Εντολή / Context Prompt</label>
-          <textarea id="agentPrompt" rows="3" placeholder="Πληκτρολογήστε εντολή για επεξεργασία..."></textarea>
-        </div>
-        <div class="action-grid">
-          <button class="btn-action" onclick="dispatchAgent('SECRETARY')"><i class="fa-solid fa-user-tie"></i> Γραμματέας</button>
-          <button class="btn-action" onclick="dispatchAgent('REMINDER')"><i class="fa-solid fa-bell"></i> Υπενθύμιση</button>
-          <button class="btn-action" onclick="dispatchAgent('ECU_DIAG')"><i class="fa-solid fa-car-battery"></i> ECU Specialist</button>
-          <button class="btn-action" onclick="dispatchAgent('CALENDAR')"><i class="fa-solid fa-calendar-days"></i> Calendar Sync</button>
-        </div>
-        
-        <div style="margin-top: 18px;">
-          <label>Γρήγορα ECU Diagnostic Codes (DTCs)</label>
-          <div class="dtc-tags">
-            <span class="dtc-tag" onclick="selectDTC('P0606')">P0606 ECU Processor Fault</span>
-            <span class="dtc-tag" onclick="selectDTC('P0A80')">P0A80 Hybrid Battery Pack</span>
-            <span class="dtc-tag" onclick="selectDTC('P0200')">P0200 Injector Circuit</span>
+    <div class="grid">
+      <!-- CONTROL PANEL -->
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-sliders"></i> Dispatch Control</div>
+
+        <div class="field">
+          <label>Quick Presets</label>
+          <div class="presets">
+            <button class="p-btn" onclick="setPreset('ECU_DIAG', 'ECU STATUS', 'DTC P0606: Internal Control Module Error.')"><i class="fa-solid fa-microchip"></i> ECU Diag</button>
+            <button class="p-btn" onclick="setPreset('TRADE_BOT', 'TAKE PROFIT', 'BTC Target Reached @ $88,500. Executed.')"><i class="fa-solid fa-chart-line"></i> Crypto Trade</button>
+            <button class="p-btn" onclick="setPreset('WORKSHOP', 'SERVICE DUE', 'Porsche 911 ECU Remap scheduled @ 16:30.')"><i class="fa-solid fa-wrench"></i> Workshop</button>
+            <button class="p-btn" onclick="setPreset('SYSTEM', 'ALL SYSTEMS OK', 'All agents running smoothly.')"><i class="fa-solid fa-check-double"></i> Normal</button>
           </div>
         </div>
+
+        <div class="field"><label>Agent Name</label><input type="text" id="inp-agent" value="ECU_DIAG" /></div>
+        <div class="field"><label>Header Title</label><input type="text" id="inp-title" value="ECU STATUS" /></div>
+        <div class="field"><label>Message Prompt</label><textarea id="inp-msg" rows="3">DTC P0606: Internal Control Module Error.</textarea></div>
+        <button class="btn-send" onclick="sendBroadcast()"><i class="fa-solid fa-paper-plane"></i> Broadcast to ESP32 Display</button>
       </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2><i class="fa-solid fa-chart-line"></i> Crypto & Market Target Engine</h2>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-          <div class="input-group">
-            <label>Asset Symbol</label>
-            <input type="text" id="coinName" value="bitcoin">
-          </div>
-          <div class="input-group">
-            <label>Take Profit ($)</label>
-            <input type="text" id="coinTP" placeholder="85000">
-          </div>
-          <div class="input-group">
-            <label>Stop Loss ($)</label>
-            <input type="text" id="coinSL" placeholder="52000">
-          </div>
-        </div>
-        <button class="btn-action" style="width: 100%; margin-top: 8px;" onclick="triggerTradingAlert()"><i class="fa-solid fa-bolt"></i> Υποβολή Target Alert στην Οθόνη</button>
-      </div>
-    </div>
+      <!-- ESP MIRROR & CONFIG -->
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-desktop"></i> ESP32 Hardware Mirror</div>
 
-    <div>
-      <div class="panel simulator-box">
-        <div class="panel-header" style="width: 100%;">
-          <h2><i class="fa-solid fa-desktop"></i> ESP32 Real-Time Mirror</h2>
-          <span style="font-size:11px; color:var(--green);"><i class="fa-solid fa-circle"></i> SYNCED</span>
+        <div class="esp-preview">
+          <div class="prev-head" id="mir-agent">ECU_DIAG</div>
+          <div class="prev-title" id="mir-title">ECU STATUS</div>
+          <div class="prev-body" id="mir-msg">DTC P0606: Internal Control Module Error.</div>
         </div>
-        
-        <div class="hardware-frame">
-          <div class="tft-top" id="sim-top">
-            <span id="sim-title">STANDBY</span>
-            <span id="sim-time">14:00</span>
-          </div>
-          <div class="tft-body">
-            <div class="tft-card" id="sim-card">
-              <div id="sim-msg">Περιμένει εντολή από τον server...</div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <h2><i class="fa-solid fa-terminal"></i> System Event Logs</h2>
-        </div>
-        <div class="log-list" id="activityLogs">
-          <div class="log-item success">[SYSTEM] WebSocket connected & synced.</div>
+        <div class="field">
+          <label>ESP32 Neon Theme Color</label>
+          <select id="theme-select" onchange="sendBroadcast()">
+            <option value="0x07FF">Electric Cyan</option>
+            <option value="0xF800">Crimson Red</option>
+            <option value="0x07E0">Neon Green</option>
+            <option value="0xFDA0">Amber Gold</option>
+            <option value="0xA25F">Cyber Purple</option>
+          </select>
         </div>
       </div>
     </div>
@@ -193,78 +150,52 @@
   <script>
     const socket = io();
 
-    function addLog(msg, type = 'info') {
-      const logs = document.getElementById('activityLogs');
-      const time = new Date().toLocaleTimeString();
-      const div = document.createElement('div');
-      div.className = `log-item ${type}`;
-      div.innerText = `[${time}] ${msg}`;
-      logs.prepend(div);
+    function setPreset(agent, title, msg) {
+      document.getElementById('inp-agent').value = agent;
+      document.getElementById('inp-title').value = title;
+      document.getElementById('inp-msg').value = msg;
+      sendBroadcast();
     }
 
-    function hex16ToCss(hexStr) {
-      if(!hexStr) return '#00f2fe';
-      let num = parseInt(hexStr, 16);
-      let r = ((num >> 11) & 0x1F) * 8;
-      let g = ((num >> 5) & 0x3F) * 4;
-      let b = (num & 0x1F) * 8;
-      return `rgb(${r},${g},${b})`;
+    function sendBroadcast() {
+      const agent = document.getElementById('inp-agent').value;
+      const title = document.getElementById('inp-title').value;
+      const message = document.getElementById('inp-msg').value;
+      const accent = document.getElementById('theme-select').value;
+
+      socket.emit('broadcast_display', {
+        agent: agent,
+        title: title,
+        message: message,
+        theme: { accentColor: accent }
+      });
     }
 
     socket.on('display_update', (data) => {
-      document.getElementById('sim-title').innerText = data.agent || 'HUB';
-      document.getElementById('sim-msg').innerText = `${data.title}\n\n${data.message}`;
-      
-      if(data.theme) {
-        document.getElementById('sim-top').style.backgroundColor = hex16ToCss(data.theme.headerBg);
-        document.getElementById('sim-card').style.borderColor = hex16ToCss(data.theme.accentColor);
-      }
-      addLog(`Display updated: [${data.agent}] ${data.title}`, 'success');
+      if(data.agent) document.getElementById('mir-agent').innerText = data.agent;
+      if(data.title) document.getElementById('mir-title').innerText = data.title;
+      if(data.message) document.getElementById('mir-msg').innerText = data.message;
     });
 
-    async function dispatchAgent(type) {
-      const prompt = document.getElementById('agentPrompt').value;
-      addLog(`Sending Agent: ${type}...`);
-      await fetch('/api/agent/switch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, prompt })
-      });
-    }
-
-    function selectDTC(code) {
-      document.getElementById('agentPrompt').value = `Διάγνωση βλάβης εγκεφάλου DTC: ${code}`;
-      dispatchAgent('ECU_DIAG');
-    }
-
-    async function triggerTradingAlert() {
-      const coin = document.getElementById('coinName').value;
-      const tp = document.getElementById('coinTP').value;
-      const sl = document.getElementById('coinSL').value;
-      
-      addLog(`Alert trigger: ${coin} TP:${tp} SL:${sl}`);
-      await fetch('/api/agent/switch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: 'CRYPTO_ALERT', 
-          prompt: `Coin: ${coin.toUpperCase()}\nTarget TP: $${tp}\nStop Loss: $${sl}` 
-        })
-      });
-    }
-
-    async function updateTickers() {
+    async function fetchBybit() {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ripple,aerodrome-finance&vs_currencies=usd');
+        const res = await fetch('https://api.bybit.com/v5/market/tickers?category=spot');
         const data = await res.json();
-        if(data.bitcoin) document.getElementById('ticker-btc').innerText = `$${data.bitcoin.usd}`;
-        if(data.ripple) document.getElementById('ticker-xrp').innerText = `$${data.ripple.usd}`;
-        if(data['aerodrome-finance']) document.getElementById('ticker-aero').innerText = `$${data['aerodrome-finance'].usd}`;
+        if(data.result && data.result.list) {
+          const list = data.result.list;
+          const btc = list.find(c => c.symbol === 'BTCUSDT');
+          const xrp = list.find(c => c.symbol === 'XRPUSDT');
+          const aero = list.find(c => c.symbol === 'AEROUSDT');
+
+          if(btc) document.getElementById('btc-val').innerText = '$' + parseFloat(btc.lastPrice).toLocaleString();
+          if(xrp) document.getElementById('xrp-val').innerText = '$' + parseFloat(xrp.lastPrice).toFixed(4);
+          if(aero) document.getElementById('aero-val').innerText = '$' + parseFloat(aero.lastPrice).toFixed(4);
+        }
       } catch(e) {}
     }
-    setInterval(updateTickers, 12000);
-    updateTickers();
+
+    setInterval(fetchBybit, 8000);
+    fetchBybit();
   </script>
 </body>
 </html>
-
