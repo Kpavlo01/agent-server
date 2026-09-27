@@ -1,18 +1,21 @@
+nano public/index.html
 <!DOCTYPE html>
 <html lang="el">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Command Hub v6.0 Ultra</title>
+  <title>CYBER-HUB // Autonomous Command Center v7.0</title>
   <script src="/socket.io/socket.io.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap');
+
     :root {
-      --bg: #05070a;
-      --card-bg: rgba(15, 20, 31, 0.85);
-      --card-border: rgba(255, 255, 255, 0.08);
+      --bg: #030712;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(56, 189, 248, 0.2);
       --cyan: #00f2fe;
-      --purple: #9d4edd;
+      --purple: #a855f7;
       --amber: #f59e0b;
       --green: #10b981;
       --red: #ef4444;
@@ -20,81 +23,86 @@
       --muted: #64748b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px; display: flex; justify-content: center; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Rajdhani', sans-serif; }
+    body {
+      background: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
+      color: var(--text); min-height: 100vh; padding: 24px; display: flex; justify-content: center;
+    }
 
-    .container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 20px; }
+    .app { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 20px; }
 
-    /* HEADER */
+    /* HEADER / TICKER */
     header {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      backdrop-filter: blur(16px); padding: 18px 24px; border-radius: 16px;
-      display: flex; justify-content: space-between; align-items: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      backdrop-filter: blur(20px); padding: 16px 28px; border-radius: 16px;
+      display: flex; justify-content: space-between; align-items: center; box-shadow: 0 0 30px rgba(0, 242, 254, 0.05);
     }
-    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.1rem; letter-spacing: 2px; color: var(--cyan); }
-    .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); }
+    .brand { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 900; letter-spacing: 2px; color: var(--cyan); display: flex; align-items: center; gap: 12px; }
+    .status-dot { width: 10px; height: 10px; background: var(--green); border-radius: 50%; box-shadow: 0 0 12px var(--green); animation: pulse 2s infinite; }
 
-    /* TICKERS */
-    .tickers { display: flex; gap: 12px; }
-    .t-card {
-      background: rgba(0,0,0,0.4); border: 1px solid var(--card-border);
-      padding: 6px 14px; border-radius: 10px; font-family: monospace; font-size: 0.85rem;
-      display: flex; align-items: center; gap: 8px;
-    }
+    .tickers { display: flex; gap: 16px; }
+    .t-card { background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); padding: 8px 16px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
 
     /* GRID */
-    .grid { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 20px; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
 
     /* CARDS */
     .card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      backdrop-filter: blur(16px); border-radius: 20px; padding: 24px;
-      display: flex; flex-direction: column; gap: 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      backdrop-filter: blur(20px); border-radius: 16px; padding: 20px;
+      display: flex; flex-direction: column; gap: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
-    .card-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--cyan); display: flex; align-items: center; gap: 8px; }
+    .card-title { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--cyan); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; }
 
-    /* PRESETS */
+    /* PRESETS & CONTROLS */
     .presets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .p-btn {
       background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
-      color: var(--text); padding: 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
-      cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+      color: var(--text); padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; justify-content: center;
     }
-    .p-btn:hover { background: var(--cyan); color: #000; font-weight: 700; }
+    .p-btn:hover { background: var(--cyan); color: #000; box-shadow: 0 0 15px var(--cyan); }
 
-    /* INPUTS */
     .field { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+    label { font-size: 0.75rem; text-transform: uppercase; color: var(--muted); font-weight: 700; letter-spacing: 1px; }
     input, textarea, select {
-      background: rgba(0,0,0,0.5); border: 1px solid var(--card-border);
-      border-radius: 10px; padding: 12px; color: #fff; font-size: 0.9rem; outline: none; transition: 0.2s;
+      background: rgba(0,0,0,0.6); border: 1px solid var(--card-border);
+      border-radius: 8px; padding: 12px; color: #fff; font-size: 0.9rem; outline: none; transition: 0.2s;
     }
-    input:focus, textarea:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0, 242, 254, 0.2); }
+    input:focus, textarea:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,242,254,0.3); }
 
     .btn-send {
-      background: var(--cyan); color: #000; font-weight: 800; border: none;
-      padding: 14px; border-radius: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px;
-      transition: all 0.2s;
+      background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #000; font-family: 'Orbitron', sans-serif; font-weight: 900; border: none;
+      padding: 14px; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.2s;
     }
-    .btn-send:hover { box-shadow: 0 0 20px var(--cyan); opacity: 0.9; }
+    .btn-send:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0,242,254,0.5); }
 
-    /* DISPLAY MIRROR */
-    .esp-preview {
-      background: #000; border: 2px solid var(--cyan); border-radius: 14px;
-      padding: 20px; min-height: 180px; position: relative; box-shadow: 0 0 25px rgba(0, 242, 254, 0.15);
+    /* ESP32 VIRTUAL HARDWARE MIRROR */
+    .hardware-frame {
+      background: #000; border: 3px solid #1e293b; border-radius: 20px; padding: 16px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 15px rgba(255,255,255,0.05); position: relative;
     }
-    .prev-head { font-size: 0.75rem; font-family: monospace; color: var(--cyan); margin-bottom: 8px; }
-    .prev-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
-    .prev-body { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; white-space: pre-wrap; }
+    .screen-bezel {
+      background: #080c14; border: 2px solid var(--cyan); border-radius: 12px; padding: 16px; min-height: 200px;
+      display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 20px rgba(0,242,254,0.1);
+    }
+    .screen-header { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; font-family: monospace; font-size: 0.8rem; }
+    .screen-title { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: #fff; margin: 12px 0 6px 0; }
+    .screen-msg { font-size: 0.9rem; color: #94a3b8; line-height: 1.4; white-space: pre-wrap; }
+    .screen-footer { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div class="app">
     <header>
-      <div class="brand"><div class="status-dot"></div>COMMAND CENTER v6.0</div>
+      <div class="brand"><div class="status-dot"></div>CYBER-HUB // COMMAND v7.0</div>
       <div class="tickers">
         <div class="t-card"><span style="color:var(--amber)">BTC</span><span id="btc-val">$0.00</span></div>
         <div class="t-card"><span style="color:var(--cyan)">XRP</span><span id="xrp-val">$0.00</span></div>
@@ -103,38 +111,49 @@
     </header>
 
     <div class="grid">
-      <!-- CONTROL PANEL -->
+      <!-- COLUMN 1: PRESETS & AGENT DISPATCH -->
       <div class="card">
-        <div class="card-title"><i class="fa-solid fa-sliders"></i> Dispatch Control</div>
+        <div class="card-title"><span><i class="fa-solid fa-terminal"></i> Agent Dispatcher</span></div>
 
         <div class="field">
-          <label>Quick Presets</label>
+          <label>Quick Load Workflows</label>
           <div class="presets">
-            <button class="p-btn" onclick="setPreset('ECU_DIAG', 'ECU STATUS', 'DTC P0606: Internal Control Module Error.')"><i class="fa-solid fa-microchip"></i> ECU Diag</button>
-            <button class="p-btn" onclick="setPreset('TRADE_BOT', 'TAKE PROFIT', 'BTC Target Reached @ $88,500. Executed.')"><i class="fa-solid fa-chart-line"></i> Crypto Trade</button>
-            <button class="p-btn" onclick="setPreset('WORKSHOP', 'SERVICE DUE', 'Porsche 911 ECU Remap scheduled @ 16:30.')"><i class="fa-solid fa-wrench"></i> Workshop</button>
-            <button class="p-btn" onclick="setPreset('SYSTEM', 'ALL SYSTEMS OK', 'All agents running smoothly.')"><i class="fa-solid fa-check-double"></i> Normal</button>
+            <button class="p-btn" onclick="setPreset('ECU_DIAG', 'ECU REMAP ENGINE', 'Porsche 911 GT3 ECU Stage 2 Map Loaded. Ready for Flash.')"><i class="fa-solid fa-car"></i> ECU Remap</button>
+            <button class="p-btn" onclick="setPreset('BYBIT_BOT', 'TAKE PROFIT SPOT', 'BTC Target $88,500 hit. Order filled successfully.')"><i class="fa-solid fa-chart-line"></i> Crypto Trade</button>
+            <button class="p-btn" onclick="setPreset('WORKSHOP', 'CIRCUIT REPAIR', 'PCB Micro-soldering Station 1 active. Test PASSED.')"><i class="fa-solid fa-microchip"></i> Workshop</button>
+            <button class="p-btn" onclick="setPreset('SYSTEM', 'SYSTEM OK', 'All background threads operating normally.')"><i class="fa-solid fa-shield-halved"></i> System Normal</button>
           </div>
         </div>
 
-        <div class="field"><label>Agent Name</label><input type="text" id="inp-agent" value="ECU_DIAG" /></div>
-        <div class="field"><label>Header Title</label><input type="text" id="inp-title" value="ECU STATUS" /></div>
-        <div class="field"><label>Message Prompt</label><textarea id="inp-msg" rows="3">DTC P0606: Internal Control Module Error.</textarea></div>
-        <button class="btn-send" onclick="sendBroadcast()"><i class="fa-solid fa-paper-plane"></i> Broadcast to ESP32 Display</button>
+        <div class="field"><label>Agent Identifier</label><input type="text" id="inp-agent" value="ECU_DIAG" /></div>
+        <div class="field"><label>Command Title</label><input type="text" id="inp-title" value="ECU REMAP ENGINE" /></div>
+        <div class="field"><label>Message Payload</label><textarea id="inp-msg" rows="3">Porsche 911 GT3 ECU Stage 2 Map Loaded. Ready for Flash.</textarea></div>
+        <button class="btn-send" onclick="sendBroadcast()"><i class="fa-solid fa-satellite-dish"></i> Execute Broadcast</button>
       </div>
 
-      <!-- ESP MIRROR & CONFIG -->
+      <!-- COLUMN 2: HARDWARE MIRROR -->
       <div class="card">
-        <div class="card-title"><i class="fa-solid fa-desktop"></i> ESP32 Hardware Mirror</div>
+        <div class="card-title"><span><i class="fa-solid fa-display"></i> ESP32 Live Display</span><span style="font-size:0.7rem; color:var(--green)">LIVE SYNC</span></div>
 
-        <div class="esp-preview">
-          <div class="prev-head" id="mir-agent">ECU_DIAG</div>
-          <div class="prev-title" id="mir-title">ECU STATUS</div>
-          <div class="prev-body" id="mir-msg">DTC P0606: Internal Control Module Error.</div>
+        <div class="hardware-frame">
+          <div class="screen-bezel" id="screen-box">
+            <div class="screen-header">
+              <span id="mir-agent" style="color:var(--cyan); font-weight:bold;">ECU_DIAG</span>
+              <span style="color:var(--green);">● ONLINE</span>
+            </div>
+            <div>
+              <div class="screen-title" id="mir-title">ECU REMAP ENGINE</div>
+              <div class="screen-msg" id="mir-msg">Porsche 911 GT3 ECU Stage 2 Map Loaded. Ready for Flash.</div>
+            </div>
+            <div class="screen-footer">
+              <span>CYD-2432S028R</span>
+              <span>WS: CONNECTED</span>
+            </div>
+          </div>
         </div>
 
         <div class="field">
-          <label>ESP32 Neon Theme Color</label>
+          <label>Display Hardware Neon Theme</label>
           <select id="theme-select" onchange="sendBroadcast()">
             <option value="0x07FF">Electric Cyan</option>
             <option value="0xF800">Crimson Red</option>
@@ -143,6 +162,15 @@
             <option value="0xA25F">Cyber Purple</option>
           </select>
         </div>
+      </div>
+
+      <!-- COLUMN 3: HARDWARE METRICS -->
+      <div class="card">
+        <div class="card-title"><span><i class="fa-solid fa-microchip"></i> ESP32 Telemetry</span></div>
+        <div class="field"><label>WiFi Signal Strength</label><input type="text" value="-42 dBm (Excellent)" readonly /></div>
+        <div class="field"><label>Free Heap Memory</label><input type="text" value="214,832 Bytes" readonly /></div>
+        <div class="field"><label>Display Resolution</label><input type="text" value="320x240 TFT (ILI9341)" readonly /></div>
+        <div class="field"><label>Firmware Revision</label><input type="text" value="v7.0 Cyberpunk Engine" readonly /></div>
       </div>
     </div>
   </div>
@@ -199,3 +227,6 @@
   </script>
 </body>
 </html>
+
+
+
