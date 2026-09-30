@@ -3,165 +3,168 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CYBER-HUB // Enterprise Multi-Agent Command Suite</title>
+  <title>COMMAND HUB // ENTERPRISE CONSOLE</title>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
     :root {
-      --bg-dark: #020408;
-      --panel-bg: rgba(10, 15, 26, 0.85);
-      --border-cyan: rgba(0, 242, 254, 0.25);
-      --cyan: #00f2fe;
-      --purple: #a855f7;
-      --amber: #f59e0b;
+      --bg: #090a0f;
+      --card-bg: #12151e;
+      --card-border: #232838;
+      --accent: #38bdf8;
+      --accent-muted: rgba(56, 189, 248, 0.15);
+      --text: #f8fafc;
+      --text-muted: #64748b;
       --green: #10b981;
+      --amber: #f59e0b;
       --red: #ef4444;
-      --text: #f1f5f9;
-      --muted: #475569;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Share Tech Mono', monospace; }
-    body { background: var(--bg-dark); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px; display: flex; justify-content: center; }
 
-    .hub-container { width: 100%; max-width: 1500px; display: flex; flex-direction: column; gap: 18px; }
+    .app-container { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 20px; }
 
+    /* HEADER */
     header {
-      background: var(--panel-bg); border: 1px solid var(--border-cyan);
-      backdrop-filter: blur(16px); padding: 14px 24px; border-radius: 12px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      padding: 18px 24px; border-radius: 12px;
       display: flex; justify-content: space-between; align-items: center;
-      box-shadow: 0 0 30px rgba(0,242,254,0.06);
     }
-    .brand { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: var(--cyan); letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
-    .pulse { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); }
+    .brand { font-weight: 700; font-size: 1rem; letter-spacing: 1px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+    .status-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
 
-    .market-bar { display: flex; gap: 12px; }
-    .m-card { background: rgba(0,0,0,0.6); border: 1px solid var(--border-cyan); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; gap: 8px; }
+    .ticker-bar { display: flex; gap: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+    .t-item { background: #0b0d13; border: 1px solid var(--card-border); padding: 6px 14px; border-radius: 6px; display: flex; gap: 8px; }
 
-    .main-grid { display: grid; grid-template-columns: 1fr 1.2fr 0.8fr; gap: 18px; }
-    @media (max-width: 1200px) { .main-grid { grid-template-columns: 1fr; } }
+    /* LAYOUT GRID */
+    .grid { display: grid; grid-template-columns: 1.1fr 1.3fr 0.8fr; gap: 20px; }
+    @media (max-width: 1200px) { .grid { grid-template-columns: 1fr; } }
 
-    .panel {
-      background: var(--panel-bg); border: 1px solid var(--border-cyan);
-      border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 14px;
-      backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    /* CARDS */
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;
     }
-    .panel-title { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; color: var(--cyan); letter-spacing: 1.5px; border-bottom: 1px solid var(--border-cyan); padding-bottom: 8px; display: flex; justify-content: space-between; }
-
-    .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .btn-preset {
-      background: rgba(255,255,255,0.03); border: 1px solid var(--border-cyan);
-      color: var(--text); padding: 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
+    .card-head {
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--card-border); padding-bottom: 10px;
     }
-    .btn-preset:hover { background: var(--cyan); color: #000; font-weight: bold; box-shadow: 0 0 15px var(--cyan); }
 
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+    /* PRESETS */
+    .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .btn-p {
+      background: #0b0d13; border: 1px solid var(--card-border);
+      color: var(--text); padding: 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; justify-content: center;
+    }
+    .btn-p:hover { border-color: var(--accent); background: var(--accent-muted); color: var(--accent); }
+
+    /* FORM ELEMENTS */
+    .group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
     input, textarea, select {
-      background: rgba(0,0,0,0.7); border: 1px solid var(--border-cyan);
-      border-radius: 6px; padding: 10px; color: #fff; font-size: 0.85rem; outline: none;
+      background: #0b0d13; border: 1px solid var(--card-border);
+      border-radius: 8px; padding: 12px; color: #fff; font-size: 0.85rem;
+      font-family: 'JetBrains Mono', monospace; outline: none; transition: 0.2s;
     }
-    input:focus, textarea:focus { border-color: var(--cyan); }
+    input:focus, textarea:focus { border-color: var(--accent); }
 
-    .btn-execute {
-      background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #000;
-      font-family: 'Orbitron', sans-serif; font-weight: 800; border: none; padding: 12px;
-      border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
+    .btn-send {
+      background: var(--accent); color: #000; font-weight: 700; border: none;
+      padding: 14px; border-radius: 8px; cursor: pointer; text-transform: uppercase; font-size: 0.8rem;
+      letter-spacing: 1px; transition: 0.2s;
     }
-    .btn-execute:hover { box-shadow: 0 0 20px var(--cyan); transform: translateY(-1px); }
+    .btn-send:hover { opacity: 0.9; transform: translateY(-1px); }
 
-    .hw-container {
-      background: #000; border: 2px solid #1e293b; border-radius: 14px; padding: 12px; position: relative;
+    /* HARDWARE MIRROR FRAME */
+    .hw-frame {
+      background: #000; border: 2px solid var(--card-border); border-radius: 12px; padding: 12px;
     }
-    .screen-mock {
-      background: #050811; border: 2px solid var(--cyan); border-radius: 8px; padding: 10px; min-height: 200px;
-      display: grid; grid-template-columns: 2fr 1fr; gap: 10px; box-shadow: inset 0 0 15px rgba(0,242,254,0.15);
+    .hw-screen {
+      background: #050608; border: 1px solid var(--card-border); border-radius: 8px; padding: 12px;
+      display: grid; grid-template-columns: 2fr 1fr; gap: 12px; min-height: 180px;
     }
-    .mock-left { border-right: 1px solid var(--border-cyan); padding-right: 8px; display: flex; flex-direction: column; justify-content: space-between; }
-    .mock-right { display: flex; flex-direction: column; gap: 8px; font-size: 0.75rem; }
-    .gauge-card { background: rgba(0,0,0,0.5); border: 1px solid var(--border-cyan); padding: 6px; border-radius: 4px; }
+    .hw-main { border-right: 1px solid var(--card-border); padding-right: 10px; display: flex; flex-direction: column; justify-content: space-between; }
+    .hw-side { display: flex; flex-direction: column; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .hw-box { background: #0b0d13; border: 1px solid var(--card-border); padding: 8px; border-radius: 6px; }
 
-    .terminal-box {
-      background: #000; border: 1px solid var(--border-cyan); border-radius: 6px;
-      padding: 10px; font-size: 0.75rem; height: 160px; overflow-y: auto; color: var(--green);
-    }
+    /* CHART CONTAINER */
+    .chart-container { height: 180px; position: relative; width: 100%; }
   </style>
 </head>
 <body>
 
-  <div class="hub-container">
+  <div class="app-container">
     <header>
-      <div class="brand"><div class="pulse"></div>CYBER-HUB // MULTI-AGENT ENGINE v8.0</div>
-      <div class="market-bar">
-        <div class="m-card"><span style="color:var(--amber)">BTC</span><span id="btc-val">$0.00</span></div>
-        <div class="m-card"><span style="color:var(--cyan)">XRP</span><span id="xrp-val">$0.00</span></div>
-        <div class="m-card"><span style="color:var(--purple)">AERO</span><span id="aero-val">$0.00</span></div>
+      <div class="brand"><div class="status-dot"></div>COMMAND HUB // EXECUTIVE SUITE</div>
+      <div class="ticker-bar">
+        <div class="t-item"><span style="color:var(--amber)">BTC</span><span id="btc-val">$0.00</span></div>
+        <div class="t-item"><span style="color:var(--accent)">XRP</span><span id="xrp-val">$0.00</span></div>
+        <div class="t-item"><span style="color:var(--green)">AERO</span><span id="aero-val">$0.00</span></div>
       </div>
     </header>
 
-    <div class="main-grid">
-      <div class="panel">
-        <div class="panel-title"><span><i class="fa-solid fa-terminal"></i> Dispatch Console</span></div>
+    <div class="grid">
+      <!-- DISPATCH CONTROLLER -->
+      <div class="card">
+        <div class="card-head"><span><i class="fa-solid fa-sliders"></i> Dispatch Control</span></div>
 
-        <div class="form-group">
-          <label>Automated Presets</label>
+        <div class="group">
+          <label>Quick Presets</label>
           <div class="preset-grid">
-            <button class="btn-preset" onclick="setPreset('ECU_DIAG', 'ECU MAP STAGE 2', 'Porsche GT3 ECU Stage 2 Reprogrammed. DTC Clean.')"><i class="fa-solid fa-car"></i> ECU Stage 2</button>
-            <button class="btn-preset" onclick="setPreset('TRADE_BOT', 'TAKE PROFIT', 'BTC Target $88,500 Hit. Spot Order Executed.')"><i class="fa-solid fa-chart-line"></i> Trade Alert</button>
-            <button class="btn-preset" onclick="setPreset('WORKSHOP', 'PCB REPAIR', 'Micro-soldering Station 1 Diagnostic: PASSED.')"><i class="fa-solid fa-microchip"></i> Workshop</button>
-            <button class="btn-preset" onclick="setPreset('SYSTEM', 'SYSTEM OK', 'All autonomous threads synchronized.')"><i class="fa-solid fa-check"></i> Normal</button>
+            <button class="btn-p" onclick="setPreset('ECU_DIAG', 'ECU STAGE 2', 'Porsche 911 GT3 Flash Complete. Target Map Ready.')"><i class="fa-solid fa-microchip"></i> ECU Stage 2</button>
+            <button class="btn-p" onclick="setPreset('TRADE_BOT', 'TAKE PROFIT', 'BTC Target $88,500 Executed. Profit Locked.')"><i class="fa-solid fa-chart-line"></i> Crypto Trade</button>
+            <button class="btn-p" onclick="setPreset('WORKSHOP', 'SERVICE DUE', 'Battery Diagnostics & PCB Repair Complete.')"><i class="fa-solid fa-wrench"></i> Workshop</button>
+            <button class="btn-p" onclick="setPreset('SYSTEM', 'SYSTEM OK', 'All agents operating normally.')"><i class="fa-solid fa-shield-halved"></i> System Normal</button>
           </div>
         </div>
 
-        <div class="form-group"><label>Agent ID</label><input type="text" id="inp-agent" value="ECU_DIAG" /></div>
-        <div class="form-group"><label>Title Header</label><input type="text" id="inp-title" value="ECU MAP STAGE 2" /></div>
-        <div class="form-group"><label>Message Payload</label><textarea id="inp-msg" rows="3">Porsche GT3 ECU Stage 2 Reprogrammed. DTC Clean.</textarea></div>
-        <button class="btn-execute" onclick="sendBroadcast()"><i class="fa-solid fa-satellite"></i> Broadcast to Network</button>
+        <div class="group"><label>Agent Identifier</label><input type="text" id="inp-agent" value="ECU_DIAG" /></div>
+        <div class="group"><label>Header Title</label><input type="text" id="inp-title" value="ECU STAGE 2" /></div>
+        <div class="group"><label>Message Payload</label><textarea id="inp-msg" rows="3">Porsche 911 GT3 Flash Complete. Target Map Ready.</textarea></div>
+        <button class="btn-send" onclick="sendBroadcast()"><i class="fa-solid fa-paper-plane"></i> Transmit to Display</button>
       </div>
 
-      <div class="panel">
-        <div class="panel-title"><span><i class="fa-solid fa-desktop"></i> ESP32 Touch Display Mirror</span><span style="color:var(--green)">LIVE</span></div>
+      <!-- CENTER COLUMN: HARDWARE MIRROR + LIVE CHART -->
+      <div class="card">
+        <div class="card-head"><span><i class="fa-solid fa-desktop"></i> ESP32 Live Mirror</span><span style="color:var(--green); font-size:0.7rem;">LIVE SYNC</span></div>
 
-        <div class="hw-container">
-          <div class="screen-mock">
-            <div class="mock-left">
+        <div class="hw-frame">
+          <div class="hw-screen">
+            <div class="hw-main">
               <div>
-                <div style="color:var(--cyan); font-size:0.7rem;" id="mir-agent">ECU_DIAG</div>
-                <div style="font-family:'Orbitron'; font-size:0.9rem; margin:4px 0;" id="mir-title">ECU MAP STAGE 2</div>
-                <div style="font-size:0.8rem; color:#94a3b8;" id="mir-msg">Porsche GT3 ECU Stage 2 Reprogrammed. DTC Clean.</div>
+                <div style="font-size:0.7rem; color:var(--accent); font-weight:700;" id="mir-agent">ECU_DIAG</div>
+                <div style="font-size:0.95rem; font-weight:700; margin:4px 0;" id="mir-title">ECU STAGE 2</div>
+                <div style="font-size:0.8rem; color:var(--text-muted);" id="mir-msg">Porsche 911 GT3 Flash Complete. Target Map Ready.</div>
               </div>
-              <div style="font-size:0.6rem; color:var(--muted);">CYD 320x240 // SPRITE ENGINE</div>
+              <div style="font-size:0.65rem; color:var(--text-muted); font-family:'JetBrains Mono';">CYD-320x240 // v8.0 PRO</div>
             </div>
-            <div class="mock-right">
-              <div class="gauge-card"><div style="color:var(--amber)">BTC</div><div id="mir-btc">$88,450</div></div>
-              <div class="gauge-card"><div style="color:var(--cyan)">XRP</div><div id="mir-xrp">$2.415</div></div>
-              <div class="gauge-card"><div style="color:var(--green)">RSSI</div><div>-40 dBm</div></div>
+            <div class="hw-side">
+              <div class="hw-box"><div style="color:var(--amber)">BTC</div><div id="mir-btc">$88,450</div></div>
+              <div class="hw-box"><div style="color:var(--accent)">XRP</div><div id="mir-xrp">$2.415</div></div>
+              <div class="hw-box"><div style="color:var(--green)">RSSI</div><div>-42 dBm</div></div>
             </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Display Hardware Neon Color</label>
-          <select id="theme-select" onchange="sendBroadcast()">
-            <option value="0x07FF">Electric Cyan</option>
-            <option value="0xF800">Crimson Red</option>
-            <option value="0x07E0">Neon Green</option>
-            <option value="0xFDA0">Amber Gold</option>
-            <option value="0xA25F">Cyber Purple</option>
-          </select>
+        <div class="card-head" style="border:none; padding:0; margin-top:8px;"><span><i class="fa-solid fa-chart-area"></i> Real-Time Crypto Trend</span></div>
+        <div class="chart-container">
+          <canvas id="marketChart"></canvas>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-title"><span><i class="fa-solid fa-network-wired"></i> Hardware Logs</span></div>
-        <div class="terminal-box" id="term-log">
-          [00:00:00] SYSTEM INITIALIZED<br/>
-          [00:00:01] SOCKET.IO BRIDGE CONNECTED<br/>
-          [00:00:02] AWAITING HARDWARE EVENTS...<br/>
-        </div>
-        <div class="form-group"><label>ESP32 Engine</label><input type="text" value="v8.0 Dual-Sprite Architecture" readonly /></div>
+      <!-- SYSTEM METRICS & LOGS -->
+      <div class="card">
+        <div class="card-head"><span><i class="fa-solid fa-server"></i> System Telemetry</span></div>
+        <div class="group"><label>WiFi RSSI</label><input type="text" value="-42 dBm (Excellent)" readonly /></div>
+        <div class="group"><label>Free Heap Memory</label><input type="text" value="214,832 Bytes" readonly /></div>
+        <div class="group"><label>Display Interface</label><input type="text" value="320x240 TFT (SPI ILI9341)" readonly /></div>
+        <div class="group"><label>Active Protocol</label><input type="text" value="WebSocket SSL (Bi-Directional)" readonly /></div>
       </div>
     </div>
   </div>
@@ -171,12 +174,32 @@
     let btcPrice = "88,450";
     let xrpPrice = "2.415";
 
-    function logTerm(msg) {
-      const box = document.getElementById('term-log');
-      const time = new Date().toLocaleTimeString();
-      box.innerHTML += `[${time}] ${msg}<br/>`;
-      box.scrollTop = box.scrollHeight;
-    }
+    // Chart.js Setup
+    const ctx = document.getElementById('marketChart').getContext('2d');
+    const marketChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'BTC / USD',
+          data: [],
+          borderColor: '#38bdf8',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: false,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: { grid: { color: '#232838' }, ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } } }
+        }
+      }
+    });
 
     function setPreset(agent, title, msg) {
       document.getElementById('inp-agent').value = agent;
@@ -189,26 +212,19 @@
       const agent = document.getElementById('inp-agent').value;
       const title = document.getElementById('inp-title').value;
       const message = document.getElementById('inp-msg').value;
-      const theme = document.getElementById('theme-select').value;
 
       socket.emit('broadcast_display', {
         currentAgent: agent,
         currentTitle: title,
         currentMessage: message,
-        themeAccent: theme,
         cryptoRates: { btc: btcPrice, xrp: xrpPrice }
       });
-      logTerm(`DISPATCH: ${agent} -> ${title}`);
     }
 
     socket.on('display_update', (data) => {
       if(data.currentAgent) document.getElementById('mir-agent').innerText = data.currentAgent;
       if(data.currentTitle) document.getElementById('mir-title').innerText = data.currentTitle;
       if(data.currentMessage) document.getElementById('mir-msg').innerText = data.currentMessage;
-    });
-
-    socket.on('hardware_log', (data) => {
-      logTerm(`ESP32 TOUCH: ${JSON.stringify(data)}`);
     });
 
     async function fetchBybit() {
@@ -222,9 +238,20 @@
           const aero = list.find(c => c.symbol === 'AEROUSDT');
 
           if(btc) {
-            btcPrice = parseFloat(btc.lastPrice).toLocaleString();
+            const rawVal = parseFloat(btc.lastPrice);
+            btcPrice = rawVal.toLocaleString();
             document.getElementById('btc-val').innerText = '$' + btcPrice;
             document.getElementById('mir-btc').innerText = '$' + btcPrice;
+
+            // Update Chart
+            const now = new Date().toLocaleTimeString();
+            marketChart.data.labels.push(now);
+            marketChart.data.datasets[0].data.push(rawVal);
+            if(marketChart.data.labels.length > 15) {
+              marketChart.data.labels.shift();
+              marketChart.data.datasets[0].data.shift();
+            }
+            marketChart.update();
           }
           if(xrp) {
             xrpPrice = parseFloat(xrp.lastPrice).toFixed(3);
@@ -236,7 +263,7 @@
       } catch(e) {}
     }
 
-    setInterval(fetchBybit, 6000);
+    setInterval(fetchBybit, 5000);
     fetchBybit();
   </script>
 </body>
