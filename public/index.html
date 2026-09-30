@@ -3,257 +3,207 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SPATIAL COMMAND NODE // V9.0 HOLOGRAM ENGINE</title>
+  <title>ENTERPRISE COMMAND CENTER // V10.0 ULTRA</title>
   <script src="/socket.io/socket.io.js"></script>
-  <!-- Three.js 3D Engine & Chart.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
     :root {
-      --bg: #010409;
-      --panel: rgba(13, 21, 38, 0.65);
-      --border: rgba(0, 242, 254, 0.3);
-      --cyan: #00f2fe;
-      --purple: #a855f7;
-      --green: #10b981;
+      --bg: #030712;
+      --card: #0b0f19;
+      --border: #1e293b;
+      --cyan: #38bdf8;
+      --green: #22c55e;
       --amber: #f59e0b;
-      --red: #ef4444;
+      --spotify: #1db954;
       --text: #f8fafc;
+      --muted: #64748b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Rajdhani', sans-serif; }
-    body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; display: flex; justify-content: center; }
 
-    #canvas-3d { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
-
-    .hud-layer { position: relative; z-index: 10; padding: 24px; max-width: 1550px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .app { width: 100%; max-width: 1600px; display: flex; flex-direction: column; gap: 20px; }
 
     /* HEADER */
     header {
-      background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(25px);
-      padding: 16px 28px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center;
-      box-shadow: 0 0 40px rgba(0, 242, 254, 0.1);
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 16px 28px; display: flex; justify-content: space-between; align-items: center;
     }
-    .brand { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 900; letter-spacing: 2px; color: var(--cyan); display: flex; align-items: center; gap: 12px; }
-    .pulse { width: 10px; height: 10px; background: var(--green); border-radius: 50%; box-shadow: 0 0 15px var(--green); animation: p 1.5s infinite alternate; }
+    .brand { font-weight: 800; font-size: 1.1rem; letter-spacing: 1.5px; color: var(--cyan); display: flex; align-items: center; gap: 10px; }
+    .dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); }
 
-    .market-tape { display: flex; gap: 16px; font-family: monospace; font-size: 0.9rem; }
-    .tape-box { background: rgba(0,0,0,0.6); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; display: flex; gap: 8px; }
+    .spotify-bar {
+      background: rgba(29, 185, 84, 0.1); border: 1px solid var(--spotify); padding: 8px 18px;
+      border-radius: 30px; display: flex; align-items: center; gap: 14px; font-size: 0.85rem;
+    }
+    .spotify-btn { background: none; border: none; color: var(--spotify); cursor: pointer; font-size: 1rem; }
 
-    /* GRID */
-    .grid { display: grid; grid-template-columns: 1.1fr 1.3fr 0.8fr; gap: 20px; }
+    /* MODULE NAV TABS */
+    .nav-tabs { display: flex; gap: 12px; }
+    .tab-btn {
+      background: var(--card); border: 1px solid var(--border); color: var(--muted);
+      padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tab-btn.active, .tab-btn:hover { color: var(--text); border-color: var(--cyan); background: rgba(56, 189, 248, 0.1); }
+
+    /* MAIN GRID */
+    .grid { display: grid; grid-template-columns: 1fr 1.3fr 0.8fr; gap: 20px; }
     @media (max-width: 1200px) { .grid { grid-template-columns: 1fr; } }
 
-    .panel {
-      background: var(--panel); border: 1px solid var(--border); backdrop-filter: blur(20px);
-      border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 16px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 22px; display: flex; flex-direction: column; gap: 16px;
     }
-    .panel-head {
-      font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 1.5px; color: var(--cyan); display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid var(--border); padding-bottom: 10px;
-    }
+    .card-title { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; }
 
     /* PRESETS */
     .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .btn-p {
-      background: rgba(0,242,254,0.05); border: 1px solid var(--border); color: var(--text);
-      padding: 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: 0.2s;
+    .p-btn {
+      background: #030712; border: 1px solid var(--border); color: var(--text);
+      padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .btn-p:hover { background: var(--cyan); color: #000; box-shadow: 0 0 25px var(--cyan); transform: translateY(-2px); }
+    .p-btn:hover { border-color: var(--cyan); color: var(--cyan); }
 
-    /* FORMS */
-    .group { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
-    input, textarea, select {
-      background: rgba(0,0,0,0.7); border: 1px solid var(--border); border-radius: 8px;
-      padding: 12px; color: #fff; font-size: 0.9rem; outline: none; transition: 0.2s;
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+    input, textarea {
+      background: #030712; border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; outline: none;
     }
-    input:focus, textarea:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(0,242,254,0.3); }
 
-    .btn-fire {
-      background: linear-gradient(135deg, var(--cyan), var(--purple)); color: #000; font-family: 'Orbitron', sans-serif;
-      font-weight: 900; border: none; padding: 14px; border-radius: 8px; cursor: pointer; text-transform: uppercase;
-      letter-spacing: 2px; transition: 0.2s;
+    .btn-send {
+      background: var(--cyan); color: #000; font-weight: 800; border: none; padding: 14px;
+      border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
     }
-    .btn-fire:hover { box-shadow: 0 0 30px var(--cyan); transform: translateY(-2px); }
+    .btn-send:hover { opacity: 0.9; transform: translateY(-1px); }
 
     /* HARDWARE MIRROR */
-    .hw-container { background: #000; border: 3px solid #1e293b; border-radius: 18px; padding: 14px; position: relative; }
+    .hw-frame { background: #000; border: 2px solid var(--border); border-radius: 14px; padding: 12px; }
     .hw-screen {
-      background: #040812; border: 2px solid var(--cyan); border-radius: 12px; padding: 12px;
-      display: grid; grid-template-columns: 2fr 1fr; gap: 10px; min-height: 200px;
+      background: #050811; border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+      display: grid; grid-template-columns: 2fr 1fr; gap: 12px; min-height: 190px;
     }
     .hw-main { border-right: 1px solid var(--border); padding-right: 10px; display: flex; flex-direction: column; justify-content: space-between; }
-    .hw-gauges { display: flex; flex-direction: column; gap: 8px; font-family: monospace; font-size: 0.75rem; }
-    .g-box { background: rgba(0,0,0,0.6); border: 1px solid var(--border); padding: 8px; border-radius: 6px; }
-
-    .chart-box { height: 180px; position: relative; }
-
-    @keyframes p { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+    .hw-side { display: flex; flex-direction: column; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .hw-box { background: #030712; border: 1px solid var(--border); padding: 8px; border-radius: 6px; }
   </style>
 </head>
 <body>
 
-  <!-- Three.js 3D Background Canvas -->
-  <canvas id="canvas-3d"></canvas>
-
-  <div class="hud-layer">
+  <div class="app">
     <header>
-      <div class="brand"><div class="pulse"></div>SPATIAL NODE // COMMAND HUB v9.0</div>
-      <div class="market-tape">
-        <div class="tape-box"><span style="color:var(--amber)">BTC</span><span id="btc-val">$0.00</span></div>
-        <div class="tape-box"><span style="color:var(--cyan)">XRP</span><span id="xrp-val">$0.00</span></div>
-        <div class="tape-box"><span style="color:var(--purple)">AERO</span><span id="aero-val">$0.00</span></div>
+      <div class="brand"><div class="dot"></div>ENTERPRISE COMMAND CENTER // V10.0</div>
+      
+      <!-- SPOTIFY LIVE INTEGRATION BAR -->
+      <div class="spotify-bar">
+        <i class="fa-brands fa-spotify" style="font-size:1.2rem;"></i>
+        <div>
+          <div style="font-weight:700;" id="sp-track">Not Playing</div>
+          <div style="font-size:0.75rem; color:var(--muted);" id="sp-artist">Connect Account</div>
+        </div>
+        <button class="spotify-btn" onclick="spControl('prev')"><i class="fa-solid fa-backward-step"></i></button>
+        <button class="spotify-btn" onclick="spControl('play')"><i class="fa-solid fa-play"></i></button>
+        <button class="spotify-btn" onclick="spControl('pause')"><i class="fa-solid fa-pause"></i></button>
+        <button class="spotify-btn" onclick="spControl('next')"><i class="fa-solid fa-forward-step"></i></button>
+        <a href="/api/spotify/login" target="_blank" style="color:var(--spotify); font-size:0.75rem; font-weight:700; text-decoration:none; margin-left:10px;">[LOGIN]</a>
       </div>
     </header>
 
+    <!-- MODULE SWITCHER -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchModule('CRYPTO_DESK')"><i class="fa-solid fa-chart-line"></i> Bybit Crypto Desk</button>
+      <button class="tab-btn" onclick="switchModule('ECU_DIAG')"><i class="fa-solid fa-car"></i> Porsche ECU Diagnostic</button>
+      <button class="tab-btn" onclick="switchModule('WORKSHOP')"><i class="fa-solid fa-microchip"></i> Workshop Station</button>
+      <button class="tab-btn" onclick="switchModule('SPOTIFY')"><i class="fa-brands fa-spotify"></i> Spotify Player</button>
+    </div>
+
     <div class="grid">
       <!-- DISPATCH CONTROLLER -->
-      <div class="panel">
-        <div class="panel-head"><span><i class="fa-solid fa-crosshairs"></i> Agent Dispatch Console</span></div>
+      <div class="card">
+        <div class="card-title"><span><i class="fa-solid fa-sliders"></i> Unified Dispatcher</span></div>
 
-        <div class="group">
-          <label>Enterprise Tactical Workflows</label>
+        <div class="field">
+          <label>Presets Engine</label>
           <div class="preset-grid">
-            <button class="btn-p" onclick="playAudio(); setPreset('ECU_DIAG', 'ECU STAGE 2 MAP', 'Porsche 911 GT3 Flash Complete. Target Map Ready.')"><i class="fa-solid fa-car"></i> ECU Stage 2</button>
-            <button class="btn-p" onclick="playAudio(); setPreset('TRADE_BOT', 'TAKE PROFIT SPOT', 'BTC Target $88,500 Executed. Profit Locked.')"><i class="fa-solid fa-chart-line"></i> Trade Alert</button>
-            <button class="btn-p" onclick="playAudio(); setPreset('WORKSHOP', 'SERVICE DIAGNOSTIC', 'Battery Diagnostics & PCB Repair Passed.')"><i class="fa-solid fa-microchip"></i> Workshop</button>
-            <button class="btn-p" onclick="playAudio(); setPreset('SYSTEM', 'ALL SYSTEMS OK', 'Multi-agent network synchronized.')"><i class="fa-solid fa-shield-halved"></i> Normal</button>
+            <button class="p-btn" onclick="setPreset('ECU_DIAG', 'ECU STAGE 2', 'Porsche 911 GT3 Flash Complete.')"><i class="fa-solid fa-car"></i> ECU Stage 2</button>
+            <button class="p-btn" onclick="setPreset('CRYPTO_DESK', 'TAKE PROFIT', 'BTC Target $88,500 Hit.')"><i class="fa-solid fa-chart-line"></i> Crypto Trade</button>
+            <button class="p-btn" onclick="setPreset('WORKSHOP', 'PCB SERVICE', 'Diagnostic Test Passed.')"><i class="fa-solid fa-microchip"></i> Workshop</button>
+            <button class="p-btn" onclick="setPreset('SYSTEM', 'SYSTEM OK', 'All threads operational.')"><i class="fa-solid fa-check"></i> System Normal</button>
           </div>
         </div>
 
-        <div class="group"><label>Agent Identifier</label><input type="text" id="inp-agent" value="ECU_DIAG" /></div>
-        <div class="group"><label>Header Title</label><input type="text" id="inp-title" value="ECU STAGE 2 MAP" /></div>
-        <div class="group"><label>Message Payload</label><textarea id="inp-msg" rows="3">Porsche 911 GT3 Flash Complete. Target Map Ready.</textarea></div>
-        <button class="btn-fire" onclick="playAudio(); sendBroadcast()"><i class="fa-solid fa-bolt"></i> Execute Transmission</button>
+        <div class="field"><label>Agent ID</label><input type="text" id="inp-agent" value="COMMAND_HUB" /></div>
+        <div class="field"><label>Header Title</label><input type="text" id="inp-title" value="SYSTEM OPERATIONAL" /></div>
+        <div class="field"><label>Message Payload</label><textarea id="inp-msg" rows="3">All operational pipelines synchronized.</textarea></div>
+        <button class="btn-send" onclick="sendBroadcast()"><i class="fa-solid fa-paper-plane"></i> Transmit to Display</button>
       </div>
 
-      <!-- CENTER: HARDWARE MIRROR & LIVE CHART -->
-      <div class="panel">
-        <div class="panel-head"><span><i class="fa-solid fa-vr-cardboard"></i> ESP32 Tactical Display Mirror</span><span style="color:var(--green); font-size:0.7rem;">3D NODE SYNC</span></div>
+      <!-- CENTER: HARDWARE MIRROR & CHART -->
+      <div class="card">
+        <div class="card-title"><span><i class="fa-solid fa-desktop"></i> ESP32 Live Hardware Mirror</span><span style="color:var(--green)">LIVE SYNC</span></div>
 
-        <div class="hw-container">
+        <div class="hw-frame">
           <div class="hw-screen">
             <div class="hw-main">
               <div>
-                <div style="font-size:0.7rem; color:var(--cyan); font-weight:700;" id="mir-agent">ECU_DIAG</div>
-                <div style="font-family:'Orbitron', sans-serif; font-size:0.95rem; margin:4px 0;" id="mir-title">ECU STAGE 2 MAP</div>
-                <div style="font-size:0.8rem; color:#cbd5e1;" id="mir-msg">Porsche 911 GT3 Flash Complete. Target Map Ready.</div>
+                <div style="font-size:0.7rem; color:var(--cyan); font-weight:700;" id="mir-agent">COMMAND_HUB</div>
+                <div style="font-size:0.95rem; font-weight:700; margin:4px 0;" id="mir-title">SYSTEM OPERATIONAL</div>
+                <div style="font-size:0.8rem; color:var(--muted);" id="mir-msg">All operational pipelines synchronized.</div>
               </div>
-              <div style="font-size:0.65rem; color:#64748b; font-family:monospace;">CYD-320x240 // V9.0 VECTOR ENGINE</div>
+              <div style="font-size:0.65rem; color:var(--muted); font-family:'JetBrains Mono';">CYD-320x240 // V10.0 ULTRA</div>
             </div>
-            <div class="hw-gauges">
-              <div class="g-box"><div style="color:var(--amber)">BTC</div><div id="mir-btc">$88,450</div></div>
-              <div class="g-box"><div style="color:var(--cyan)">XRP</div><div id="mir-xrp">$2.415</div></div>
-              <div class="g-box"><div style="color:var(--green)">SIGNAL</div><div>-42 dBm</div></div>
+            <div class="hw-side">
+              <div class="hw-box"><div style="color:var(--amber)">BTC</div><div id="mir-btc">$88,450</div></div>
+              <div class="hw-box"><div style="color:var(--cyan)">XRP</div><div id="mir-xrp">$2.415</div></div>
+              <div class="hw-box"><div style="color:var(--green)">SPOTIFY</div><div id="mir-sp-state">Pause</div></div>
             </div>
           </div>
         </div>
 
-        <div class="panel-head" style="border:none; padding:0; margin-top:6px;"><span><i class="fa-solid fa-chart-area"></i> Real-Time Bybit Stream</span></div>
-        <div class="chart-box">
+        <div class="card-title" style="border:none; padding:0; margin-top:6px;"><span><i class="fa-solid fa-chart-area"></i> Real-Time Bybit Stream</span></div>
+        <div style="height:170px; position:relative;">
           <canvas id="marketChart"></canvas>
         </div>
       </div>
 
-      <!-- SYSTEM METRICS & LOGS -->
-      <div class="panel">
-        <div class="panel-head"><span><i class="fa-solid fa-microchip"></i> Node Telemetry</span></div>
-        <div class="group"><label>WiFi RSSI Signal</label><input type="text" value="-42 dBm (Excellent)" readonly /></div>
-        <div class="group"><label>Free SRAM Memory</label><input type="text" value="214,832 Bytes" readonly /></div>
-        <div class="group"><label>Render SSL Latency</label><input type="text" value="16 ms (Real-time)" readonly /></div>
-        <div class="group"><label>Engine Mode</label><input type="text" value="v9.0 Holographic Spatial Node" readonly /></div>
+      <!-- TELEMETRY METRICS -->
+      <div class="card">
+        <div class="card-title"><span><i class="fa-solid fa-server"></i> System Telemetry</span></div>
+        <div class="field"><label>Active Module</label><input type="text" id="tel-mod" value="CRYPTO_DESK" readonly /></div>
+        <div class="field"><label>Spotify Sync</label><input type="text" id="tel-sp" value="Active Stream" readonly /></div>
+        <div class="field"><label>Hardware Interface</label><input type="text" value="ESP32 CYD 320x240 TFT" readonly /></div>
+        <div class="field"><label>Protocol</label><input type="text" value="WebSocket SSL (Bi-Directional)" readonly /></div>
       </div>
     </div>
   </div>
 
   <script>
-    // Audio FX Engine (Web Audio API)
-    function playAudio() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.1);
-      } catch(e){}
-    }
-
-    // Three.js 3D Background Engine
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-3d'), alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    const geometry = new THREE.BufferGeometry();
-    const count = 700;
-    const positions = new Float32Array(count * 3);
-    for(let i=0; i<count*3; i++) { positions[i] = (Math.random() - 0.5) * 20; }
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const material = new THREE.PointsMaterial({ size: 0.03, color: 0x00f2fe, transparent: true, opacity: 0.6 });
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
-
-    camera.position.z = 5;
-
-    function animate3D() {
-      requestAnimationFrame(animate3D);
-      points.rotation.x += 0.0005;
-      points.rotation.y += 0.001;
-      renderer.render(scene, camera);
-    }
-    animate3D();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // Socket.io & Chart Logic
     const socket = io();
+    let currentModule = "CRYPTO_DESK";
     let btcPrice = "88,450";
     let xrpPrice = "2.415";
 
     const chartCtx = document.getElementById('marketChart').getContext('2d');
     const marketChart = new Chart(chartCtx, {
       type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          label: 'BTC/USD',
-          data: [],
-          borderColor: '#00f2fe',
-          backgroundColor: 'rgba(0, 242, 254, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { display: false },
-          y: { grid: { color: 'rgba(0,242,254,0.1)' }, ticks: { color: '#64748b' } }
-        }
-      }
+      data: { labels: [], datasets: [{ label: 'BTC', data: [], borderColor: '#38bdf8', borderWidth: 2, tension: 0.3, pointRadius: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } } } }
     });
+
+    function switchModule(mod) {
+      currentModule = mod;
+      document.getElementById('tel-mod').value = mod;
+      sendBroadcast();
+    }
+
+    function spControl(act) {
+      socket.emit('spotify_control', act);
+    }
 
     function setPreset(agent, title, msg) {
       document.getElementById('inp-agent').value = agent;
@@ -263,22 +213,24 @@
     }
 
     function sendBroadcast() {
-      const agent = document.getElementById('inp-agent').value;
-      const title = document.getElementById('inp-title').value;
-      const message = document.getElementById('inp-msg').value;
-
       socket.emit('broadcast_display', {
-        currentAgent: agent,
-        currentTitle: title,
-        currentMessage: message,
-        cryptoRates: { btc: btcPrice, xrp: xrpPrice }
+        currentModule: currentModule,
+        agent: document.getElementById('inp-agent').value,
+        title: document.getElementById('inp-title').value,
+        message: document.getElementById('inp-msg').value,
+        crypto: { btc: btcPrice, xrp: xrpPrice }
       });
     }
 
     socket.on('display_update', (data) => {
-      if(data.currentAgent) document.getElementById('mir-agent').innerText = data.currentAgent;
-      if(data.currentTitle) document.getElementById('mir-title').innerText = data.currentTitle;
-      if(data.currentMessage) document.getElementById('mir-msg').innerText = data.currentMessage;
+      if(data.agent) document.getElementById('mir-agent').innerText = data.agent;
+      if(data.title) document.getElementById('mir-title').innerText = data.title;
+      if(data.message) document.getElementById('mir-msg').innerText = data.message;
+      if(data.spotify) {
+        document.getElementById('sp-track').innerText = data.spotify.track;
+        document.getElementById('sp-artist').innerText = data.spotify.artist;
+        document.getElementById('mir-sp-state').innerText = data.spotify.isPlaying ? "Playing" : "Pause";
+      }
     });
 
     async function fetchBybit() {
@@ -286,36 +238,24 @@
         const res = await fetch('https://api.bybit.com/v5/market/tickers?category=spot');
         const data = await res.json();
         if(data.result && data.result.list) {
-          const list = data.result.list;
-          const btc = list.find(c => c.symbol === 'BTCUSDT');
-          const xrp = list.find(c => c.symbol === 'XRPUSDT');
-          const aero = list.find(c => c.symbol === 'AEROUSDT');
-
+          const btc = data.result.list.find(c => c.symbol === 'BTCUSDT');
+          const xrp = data.result.list.find(c => c.symbol === 'XRPUSDT');
           if(btc) {
-            const rawVal = parseFloat(btc.lastPrice);
-            btcPrice = rawVal.toLocaleString();
-            document.getElementById('btc-val').innerText = '$' + btcPrice;
+            const raw = parseFloat(btc.lastPrice);
+            btcPrice = raw.toLocaleString();
             document.getElementById('mir-btc').innerText = '$' + btcPrice;
-
-            const time = new Date().toLocaleTimeString();
-            marketChart.data.labels.push(time);
-            marketChart.data.datasets[0].data.push(rawVal);
-            if(marketChart.data.labels.length > 20) {
-              marketChart.data.labels.shift();
-              marketChart.data.datasets[0].data.shift();
-            }
+            marketChart.data.labels.push(new Date().toLocaleTimeString());
+            marketChart.data.datasets[0].data.push(raw);
+            if(marketChart.data.labels.length > 15) { marketChart.data.labels.shift(); marketChart.data.datasets[0].data.shift(); }
             marketChart.update();
           }
           if(xrp) {
             xrpPrice = parseFloat(xrp.lastPrice).toFixed(3);
-            document.getElementById('xrp-val').innerText = '$' + xrpPrice;
             document.getElementById('mir-xrp').innerText = '$' + xrpPrice;
           }
-          if(aero) document.getElementById('aero-val').innerText = '$' + parseFloat(aero.lastPrice).toFixed(4);
         }
       } catch(e) {}
     }
-
     setInterval(fetchBybit, 5000);
     fetchBybit();
   </script>
