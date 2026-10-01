@@ -14,27 +14,27 @@ app.use(express.static('public'));
 
 // Global Multi-Module System State
 let systemState = {
-  currentModule: "CRYPTO_DESK", // CRYPTO_DESK, ECU_DIAG, WORKSHOP, SPOTIFY
-  agent: "AUTONOMOUS_HUB",
+  currentModule: "CRYPTO_DESK",
+  agent: "COMMAND_HUB",
   title: "SYSTEM OPERATIONAL",
   message: "All operational pipelines synchronized.",
   spotify: {
     isPlaying: false,
     track: "Not Playing",
-    artist: "Spotify Offline",
+    artist: "Offline",
     progressMs: 0,
     durationMs: 0
   },
-  crypto: { btc: "88,450", xrp: "2.415", aero: "1.240" },
-  ecu: { map: "STAGE 2 GT3", boost: "1.4 bar", oilTemp: "92C", dtc: "CLEAR" }
+  crypto: { btc: "--", xrp: "--" }
 };
 
 // --- SPOTIFY OAUTH & API INTEGRATION ---
-const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "YOUR_CLIENT_ID";
-const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || "YOUR_CLIENT_SECRET";
+const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "";
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || "";
 let spotifyAccessToken = "";
 
 app.get('/api/spotify/login', (req, res) => {
+  if (!SPOTIFY_CLIENT_ID) return res.send("Spotify Client ID Missing in Environment Variables.");
   const scope = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
   const redirect_uri = `${req.protocol}://${req.get('host')}/callback`;
   res.redirect(`https://accounts.spotify.com/authorize?response_type=code&client_id=${SPOTIFY_CLIENT_ID}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirect_uri)}`);
@@ -77,18 +77,7 @@ async function updateSpotifyState() {
 }
 setInterval(updateSpotifyState, 3000);
 
-// Unified Webhook Dispatch
-app.post('/api/v1/dispatch', (req, res) => {
-  const { module, agent, title, message } = req.body;
-  if (module) systemState.currentModule = module;
-  if (agent) systemState.agent = agent;
-  if (title) systemState.title = title;
-  if (message) systemState.message = message;
-
-  io.emit('display_update', systemState);
-  res.status(200).json({ status: 'OK', state: systemState });
-});
-
+// Socket.io Handlers
 io.on('connection', (socket) => {
   socket.emit('display_update', systemState);
 
@@ -110,4 +99,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`[ULTIMATE HUB] Active on port ${PORT}`));
+server.listen(PORT, () => console.log(`[COMMAND CENTER] Running on port ${PORT}`));
