@@ -3,131 +3,304 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>COMMAND CENTER ULTRA V14</title>
+  <title>CYBER HUD COMMAND CENTER V15</title>
   <script src="/socket.io/socket.io.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #030712;
-      --card-bg: rgba(15, 23, 42, 0.75);
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.85);
       --border: #1e293b;
       --cyan: #00f0ff;
       --spotify: #1db954;
+      --pink: #ff0055;
       --amber: #f59e0b;
-      --purple: #8b5cf6;
       --text: #f8fafc;
-      --text-muted: #64748b;
+      --muted: #64748b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'JetBrains Mono', monospace; }
-    body { background: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; gap: 20px; min-height: 100vh; background-image: radial-gradient(circle at 50% 0%, #0f172a 0%, #030712 80%); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Rajdhani', sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(29, 185, 84, 0.08) 0%, transparent 40%);
+    }
 
-    header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); backdrop-filter: blur(16px); padding: 16px 24px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 0 30px rgba(0, 240, 255, 0.05); }
-    .brand { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; color: var(--cyan); display: flex; align-items: center; gap: 12px; text-shadow: 0 0 12px rgba(0,240,255,0.4); }
-    .dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 12px #10b981; }
+    /* Top Bar Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      padding: 16px 28px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+      margin-bottom: 24px;
+    }
+    .brand {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: var(--cyan);
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-badge {
+      font-size: 0.8rem;
+      font-family: 'Orbitron', sans-serif;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid #10b981;
+      color: #10b981;
+      text-shadow: 0 0 10px #10b981;
+    }
 
-    .nav-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-muted); padding: 14px; border-radius: 10px; font-weight: 700; text-align: center; cursor: pointer; transition: all 0.25s ease; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; letter-spacing: 1px; }
-    .tab:hover { border-color: var(--cyan); color: #fff; }
-    .tab.active { background: rgba(0, 240, 255, 0.1); color: var(--cyan); border-color: var(--cyan); box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.2); }
-    .tab.spotify-tab.active { background: rgba(29, 185, 84, 0.1); color: var(--spotify); border-color: var(--spotify); box-shadow: inset 0 0 15px rgba(29, 185, 84, 0.2); }
+    /* Navigation Bar */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .nav-btn {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 18px;
+      border-radius: 12px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: center;
+    }
+    .nav-btn:hover {
+      border-color: var(--cyan);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 240, 255, 0.15);
+    }
+    .nav-btn.active {
+      background: rgba(0, 240, 255, 0.12);
+      color: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+    .nav-btn.spotify-tab.active {
+      background: rgba(29, 185, 84, 0.12);
+      color: var(--spotify);
+      border-color: var(--spotify);
+      box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+    }
 
-    .grid-layout { display: grid; grid-template-columns: 2.2fr 1fr; gap: 20px; }
-    .card { background: var(--card-bg); backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 20px; position: relative; overflow: hidden; }
-    .card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--cyan); }
-    .card.spotify-mode::before { background: var(--spotify); }
+    /* Main Workspace */
+    .workspace {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
 
-    .card-header { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+    .hud-card {
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    .hud-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 6px; height: 100%;
+      background: var(--cyan);
+      box-shadow: 0 0 15px var(--cyan);
+    }
+    .hud-card.spotify-mode::before {
+      background: var(--spotify);
+      box-shadow: 0 0 15px var(--spotify);
+    }
 
-    .title { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1.2; }
-    .subtitle { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+    /* Spotify Music Player Section */
+    .sp-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .sp-player-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 24px;
+      align-items: center;
+      background: rgba(0,0,0,0.4);
+      padding: 24px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .sp-cover {
+      width: 140px;
+      height: 140px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      border: 2px solid var(--spotify);
+    }
+    .sp-info { display: flex; flex-direction: column; gap: 8px; }
+    .sp-track { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 900; color: #fff; }
+    .sp-artist { font-size: 1.2rem; color: var(--muted); font-weight: 600; }
 
-    /* Spotify Component */
-    .spotify-auth-box { background: rgba(0,0,0,0.5); border: 1px solid var(--spotify); border-radius: 12px; padding: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
-    .spotify-player { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; gap: 20px; align-items: center; }
-    .album-art { width: 100px; height: 100px; border-radius: 10px; background: #1e293b; object-fit: cover; border: 1px solid var(--border); }
+    /* Visualizer Bar */
+    .visualizer {
+      display: flex;
+      gap: 4px;
+      height: 30px;
+      align-items: flex-end;
+      margin-top: 10px;
+    }
+    .v-bar {
+      flex: 1;
+      background: var(--spotify);
+      border-radius: 2px;
+      animation: bounce 1.2s infinite ease-in-out alternate;
+    }
+    @keyframes bounce {
+      0% { height: 15%; }
+      100% { height: 100%; }
+    }
 
-    .progress-bar { background: #1e293b; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 10px; }
-    .progress-fill { background: var(--spotify); height: 100%; width: 0%; box-shadow: 0 0 10px var(--spotify); transition: width 0.3s linear; }
+    /* Controls */
+    .ctrl-btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .btn-action {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-action:hover {
+      border-color: var(--cyan);
+      background: #334155;
+      transform: translateY(-2px);
+    }
 
-    .btn-group { display: flex; gap: 12px; margin-top: 12px; }
-    .btn { background: #1e293b; border: 1px solid var(--border); color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
-    .btn:hover { background: #334155; border-color: var(--cyan); }
-    .btn-sp { background: var(--spotify); color: #000; border: none; font-weight: 800; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 0 20px rgba(29, 185, 84, 0.4); transition: transform 0.2s; }
-    .btn-sp:hover { transform: scale(1.03); }
-
-    /* CYD Mirror Box */
-    .cyd-mirror-frame { background: #000; border: 2px solid var(--border); border-radius: 10px; height: 240px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 25px rgba(0,0,0,0.9); }
-    .cyd-top { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--cyan); border-bottom: 1px solid #1f293d; padding-bottom: 6px; }
+    /* Hardware Display Mirror */
+    .esp-mirror {
+      background: #000;
+      border: 3px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 0 25px rgba(0,240,255,0.1);
+      position: relative;
+    }
+    .esp-screen-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 8px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      color: var(--cyan);
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand"><div class="dot"></div> COMMAND CENTER V14 ULTRA</div>
-    <a href="/api/spotify/login" class="btn-sp">🎵 CONNECT SPOTIFY</a>
+    <div class="brand">
+      <div style="width: 12px; height: 12px; background: var(--cyan); border-radius: 50%; box-shadow: 0 0 12px var(--cyan);"></div>
+      CYBER HUD V15 COMMAND
+    </div>
+    <div class="status-badge">SYSTEM ONLINE // 240 FPS SERVER</div>
   </header>
 
-  <div class="nav-tabs">
-    <div class="tab active" onclick="setModule('CRYPTO_DESK')">📈 CRYPTO</div>
-    <div class="tab" onclick="setModule('ECU_DIAG')">🔌 ECU DIAG</div>
-    <div class="tab" onclick="setModule('WORKSHOP')">🛠️ WORKSHOP</div>
-    <div class="tab spotify-tab" onclick="setModule('SPOTIFY')">🎵 SPOTIFY</div>
+  <div class="nav-grid">
+    <div class="nav-btn active" onclick="setModule('CRYPTO_DESK')">📈 CRYPTO TICKER</div>
+    <div class="nav-btn" onclick="setModule('ECU_DIAG')">🔌 ECU DIAGNOSTICS</div>
+    <div class="nav-btn" onclick="setModule('WORKSHOP')">🛠️ WORKSHOP STATE</div>
+    <div class="nav-btn spotify-tab" onclick="setModule('SPOTIFY')">🎵 SPOTIFY HUD</div>
   </div>
 
-  <div class="grid-layout">
-    <!-- Left Area -->
-    <div class="card" id="main-card">
-      <div class="card-header">
-        <span>ACTIVE WORKSPACE PIPELINE</span>
-        <span id="active-tag" style="color: var(--cyan); font-weight: 700;">SYSTEM READY</span>
+  <div class="workspace">
+    <!-- Main Interactive Card -->
+    <div class="hud-card" id="hud-main">
+      <div id="standard-view">
+        <h1 style="font-family: 'Orbitron'; font-size: 2.2rem; color: #fff;" id="web-title">SYSTEM OPERATIONAL</h1>
+        <p style="color: var(--muted); font-size: 1.1rem; margin-top: 10px;" id="web-subtitle">All modules synchronized with ESP32 node.</p>
       </div>
 
-      <!-- Spotify Dedicated View -->
-      <div id="spotify-view" style="display: none;">
-        <div id="spotify-login-prompt" class="spotify-auth-box">
-          <div style="font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--spotify);">SPOTIFY NOT CONNECTED</div>
-          <div style="color: var(--text-muted); max-width: 400px; font-size: 0.85rem;">Συνδέσου με το Spotify σου για να ελέγχεις την αναπαραγωγή και να βλέπεις ζωντανά τους τίτλους στο ESP32.</div>
-          <a href="/api/spotify/login" class="btn-sp">🚀 AUTHORIZE SPOTIFY ACCOUNT</a>
+      <div id="spotify-view" style="display: none;" class="sp-container">
+        <div id="sp-unauth" style="text-align: center; padding: 40px;">
+          <h2 style="font-family: 'Orbitron'; color: var(--spotify); margin-bottom: 16px;">SPOTIFY ACCOUNT DISCONNECTED</h2>
+          <a href="/api/spotify/login" style="background: var(--spotify); color: #000; font-family: 'Orbitron'; font-weight: 900; padding: 14px 28px; border-radius: 10px; text-decoration: none; display: inline-block;">CONNECT SPOTIFY OAUTH</a>
         </div>
 
-        <div id="spotify-player-box" class="spotify-player" style="display: none;">
-          <img id="sp-art" class="album-art" src="" alt="Album Art" />
-          <div style="flex: 1;">
-            <div style="font-size: 0.7rem; color: var(--spotify); font-weight: 700;">LIVE SPOTIFY STREAM</div>
-            <div class="title" id="sp-title" style="font-size: 1.4rem; margin-top: 4px;">--</div>
-            <div class="subtitle" id="sp-artist" style="margin-top: 2px;">--</div>
+        <div id="sp-auth" class="sp-player-grid" style="display: none;">
+          <img id="sp-img" class="sp-cover" src="" alt="Album Cover">
+          <div class="sp-info">
+            <div style="font-size: 0.8rem; color: var(--spotify); font-weight: 700; letter-spacing: 2px;">NOW PLAYING</div>
+            <div class="sp-track" id="sp-title">--</div>
+            <div class="sp-artist" id="sp-artist">--</div>
             
-            <div class="progress-bar"><div class="progress-fill" id="sp-progress"></div></div>
-            
-            <div class="btn-group">
-              <button class="btn" onclick="spControl('previous')">⏮ PREV</button>
-              <button class="btn" onclick="spControl('play')">▶ PLAY</button>
-              <button class="btn" onclick="spControl('pause')">⏸ PAUSE</button>
-              <button class="btn" onclick="spControl('next')">NEXT ⏭</button>
+            <div class="visualizer">
+              <div class="v-bar" style="animation-delay: 0.1s;"></div>
+              <div class="v-bar" style="animation-delay: 0.4s;"></div>
+              <div class="v-bar" style="animation-delay: 0.2s;"></div>
+              <div class="v-bar" style="animation-delay: 0.6s;"></div>
+              <div class="v-bar" style="animation-delay: 0.3s;"></div>
+            </div>
+
+            <div class="ctrl-btn-group">
+              <button class="btn-action" onclick="spControl('previous')">⏮ PREV</button>
+              <button class="btn-action" onclick="spControl('play')">▶ PLAY</button>
+              <button class="btn-action" onclick="spControl('pause')">⏸ PAUSE</button>
+              <button class="btn-action" onclick="spControl('next')">NEXT ⏭</button>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Standard Module View -->
-      <div id="standard-view">
-        <div class="title" id="web-title">SYSTEM OPERATIONAL</div>
-        <div class="subtitle" id="web-subtitle" style="margin-top: 8px;">All operational pipelines synchronized with ESP32 node.</div>
-      </div>
     </div>
 
-    <!-- Right Area: ESP32 Hardware Mirror -->
-    <div class="card">
-      <div class="card-header">ESP32 CYD HARDWARE MIRROR</div>
-      <div class="cyd-mirror-frame">
-        <div class="cyd-top">
-          <span id="cyd-agent">COMMAND_HUB</span>
-          <span style="color: var(--spotify);">ESP32 ONLINE</span>
+    <!-- Hardware ESP Mirror -->
+    <div class="hud-card">
+      <div style="font-family: 'Orbitron'; font-size: 0.8rem; color: var(--muted); margin-bottom: 12px;">ESP32 CYD REAL-TIME MIRROR</div>
+      <div class="esp-mirror">
+        <div class="esp-screen-header">
+          <span id="esp-agent">COMMAND_HUB</span>
+          <span style="color: #10b981;">320x240 LCD</span>
         </div>
-        <div style="font-family: 'Orbitron', sans-serif; font-size: 1rem; color: #fff;" id="cyd-title">--</div>
-        <div style="font-size: 0.8rem; color: var(--text-muted);" id="cyd-msg">--</div>
-        <div style="font-size: 0.75rem; color: var(--amber); border-top: 1px solid #1f293d; padding-top: 6px;" id="cyd-ticker">BTC: -- | XRP: --</div>
+        <div>
+          <div id="esp-title" style="font-family: 'Orbitron'; font-size: 1.2rem; color: #fff;">--</div>
+          <div id="esp-msg" style="color: var(--muted); font-size: 0.9rem; margin-top: 6px;">--</div>
+        </div>
+        <div style="border-top: 1px solid var(--border); padding-top: 8px; color: var(--amber); font-size: 0.85rem;" id="esp-crypto">
+          BTC: -- | XRP: --
+        </div>
       </div>
     </div>
   </div>
@@ -136,14 +309,6 @@
     const socket = io();
 
     function setModule(mod) {
-      document.querySelectorAll('.tab').forEach((t, i) => {
-        t.classList.toggle('active', 
-          (i===0 && mod==='CRYPTO_DESK') || 
-          (i===1 && mod==='ECU_DIAG') || 
-          (i===2 && mod==='WORKSHOP') || 
-          (i===3 && mod==='SPOTIFY')
-        );
-      });
       socket.emit('broadcast_display', { currentModule: mod });
     }
 
@@ -152,39 +317,34 @@
     }
 
     socket.on('display_update', (data) => {
-      document.getElementById('cyd-agent').innerText = data.agent || "COMMAND_HUB";
-      
       const isSpotify = (data.currentModule === "SPOTIFY");
       document.getElementById('spotify-view').style.display = isSpotify ? 'block' : 'none';
       document.getElementById('standard-view').style.display = isSpotify ? 'none' : 'block';
+      
+      const hud = document.getElementById('hud-main');
+      if (isSpotify) hud.classList.add('spotify-mode');
+      else hud.classList.remove('spotify-mode');
 
       if (isSpotify) {
-        document.getElementById('main-card').classList.add('spotify-mode');
         if (data.spotify && data.spotify.authenticated) {
-          document.getElementById('spotify-login-prompt').style.display = 'none';
-          document.getElementById('spotify-player-box').style.display = 'flex';
-          
+          document.getElementById('sp-unauth').style.display = 'none';
+          document.getElementById('sp-auth').style.display = 'grid';
           document.getElementById('sp-title').innerText = data.spotify.track;
           document.getElementById('sp-artist').innerText = data.spotify.artist;
-          if (data.spotify.albumArt) document.getElementById('sp-art').src = data.spotify.albumArt;
-
-          if (data.spotify.durationMs > 0) {
-            const pct = (data.spotify.progressMs / data.spotify.durationMs) * 100;
-            document.getElementById('sp-progress').style.width = pct + "%";
-          }
+          if (data.spotify.albumArt) document.getElementById('sp-img').src = data.spotify.albumArt;
         } else {
-          document.getElementById('spotify-login-prompt').style.display = 'flex';
-          document.getElementById('spotify-player-box').style.display = 'none';
+          document.getElementById('sp-unauth').style.display = 'block';
+          document.getElementById('sp-auth').style.display = 'none';
         }
       } else {
-        document.getElementById('main-card').classList.remove('spotify-mode');
         document.getElementById('web-title').innerText = data.title;
         document.getElementById('web-subtitle').innerText = data.message;
       }
 
-      document.getElementById('cyd-title').innerText = isSpotify ? ("🎵 " + data.spotify.track) : data.title;
-      document.getElementById('cyd-msg').innerText = isSpotify ? data.spotify.artist : data.message;
-      document.getElementById('cyd-ticker').innerText = `BTC: $${data.crypto.btc || '--'} | XRP: $${data.crypto.xrp || '--'}`;
+      document.getElementById('esp-agent').innerText = data.agent || "COMMAND_HUB";
+      document.getElementById('esp-title').innerText = isSpotify ? ("🎵 " + data.spotify.track) : data.title;
+      document.getElementById('esp-msg').innerText = isSpotify ? data.spotify.artist : data.message;
+      document.getElementById('esp-crypto').innerText = `BTC: $${data.crypto.btc || '--'} | XRP: $${data.crypto.xrp || '--'}`;
     });
   </script>
 </body>
