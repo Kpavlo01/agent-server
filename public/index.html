@@ -3,94 +3,126 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>COMMAND CENTER V12 PRO</title>
+  <title>COMMAND CENTER ULTRA V13</title>
   <script src="/socket.io/socket.io.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --panel-bg: #111827;
-      --panel-border: #1f293d;
-      --accent-cyan: #00f0ff;
-      --accent-spotify: #1db954;
-      --accent-amber: #f59e0b;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
+      --bg: #030712;
+      --card-bg: rgba(17, 24, 39, 0.7);
+      --border: #1f293d;
+      --cyan: #00f0ff;
+      --spotify: #1db954;
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --text: #f9fafb;
+      --text-muted: #6b7280;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text-main); padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'JetBrains Mono', monospace; }
+    body { background: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; gap: 20px; background-image: radial-gradient(circle at 50% 0%, #0f172a 0%, #030712 70%); min-height: 100vh; }
 
-    header { display: flex; justify-content: space-between; align-items: center; background: var(--panel-bg); padding: 18px 24px; border-radius: 14px; border: 1px solid var(--panel-border); }
-    .brand { font-size: 1.25rem; font-weight: 800; letter-spacing: 1.5px; color: var(--accent-cyan); display: flex; align-items: center; gap: 10px; }
-    .dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+    header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); backdrop-filter: blur(12px); padding: 16px 24px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 0 30px rgba(0, 240, 255, 0.05); }
+    .brand { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 900; letter-spacing: 2px; color: var(--cyan); display: flex; align-items: center; gap: 12px; text-shadow: 0 0 12px rgba(0,240,255,0.4); }
+    .dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 12px #10b981; }
 
     .nav-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .tab { background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 14px; border-radius: 10px; font-weight: 700; text-align: center; cursor: pointer; transition: 0.2s; }
-    .tab.active { background: #1f293d; color: var(--accent-cyan); border-color: var(--accent-cyan); }
-    .tab.spotify-tab.active { color: var(--accent-spotify); border-color: var(--accent-spotify); }
+    .tab { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-muted); padding: 14px; border-radius: 10px; font-weight: 700; text-align: center; cursor: pointer; transition: all 0.25s ease; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; letter-spacing: 1px; }
+    .tab:hover { border-color: var(--cyan); color: #fff; }
+    .tab.active { background: rgba(0, 240, 255, 0.1); color: var(--cyan); border-color: var(--cyan); box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.2); }
+    .tab.spotify-tab.active { background: rgba(29, 185, 84, 0.1); color: var(--spotify); border-color: var(--spotify); box-shadow: inset 0 0 15px rgba(29, 185, 84, 0.2); }
 
-    .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-    .card { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+    .grid-layout { display: grid; grid-template-columns: 2.2fr 1fr; gap: 20px; }
+    .card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 20px; position: relative; overflow: hidden; }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--cyan); }
+    .card.spotify-mode::before { background: var(--spotify); }
 
-    .title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
-    .subtitle { color: var(--text-muted); font-size: 1rem; }
+    .card-header { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
 
-    .progress-bg { background: #1f293d; height: 8px; border-radius: 4px; overflow: hidden; }
-    .progress-fill { background: var(--accent-spotify); height: 100%; width: 0%; transition: width 0.4s ease; }
+    .title { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .subtitle { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
 
-    .btn-group { display: flex; gap: 10px; }
-    .btn { background: #1f293d; border: 1px solid var(--panel-border); color: #fff; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-    .btn:hover { background: #374151; }
-    .btn-sp { background: var(--accent-spotify); color: #000; text-decoration: none; border: none; font-weight: 700; }
+    /* Spotify Dynamic Player */
+    .spotify-player { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .progress-bar { background: #1e293b; height: 6px; border-radius: 3px; overflow: hidden; cursor: pointer; }
+    .progress-fill { background: var(--spotify); height: 100%; width: 0%; box-shadow: 0 0 10px var(--spotify); transition: width 0.3s linear; }
 
-    /* CYD Hardware Mirror Frame */
-    .cyd-frame { background: #000; border: 3px solid #374151; border-radius: 12px; height: 220px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 25px rgba(0,0,0,0.5); }
-    .cyd-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--accent-cyan); border-bottom: 1px solid #1f293d; padding-bottom: 6px; }
+    .btn-group { display: flex; gap: 12px; }
+    .btn { background: #1e293b; border: 1px solid var(--border); color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+    .btn:hover { background: #334155; border-color: var(--cyan); }
+    .btn-sp { background: var(--spotify); color: #000; border: none; font-weight: 800; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; }
+
+    /* Crypto & System Metrics Grid */
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .metric-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+    .metric-val { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--amber); margin-top: 4px; }
+
+    /* CYD Mirror Box */
+    .cyd-mirror-frame { background: #000; border: 2px solid var(--border); border-radius: 10px; height: 230px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+    .cyd-top { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--cyan); border-bottom: 1px solid #1f293d; padding-bottom: 6px; }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand"><div class="dot"></div> COMMAND CENTER V12</div>
-    <a href="/api/spotify/login" class="btn btn-sp">🎵 Connect Spotify</a>
+    <div class="brand"><div class="dot"></div> COMMAND CENTER V13 ULTRA</div>
+    <a href="/api/spotify/login" class="btn-sp">🎵 CONNECT SPOTIFY</a>
   </header>
 
   <div class="nav-tabs">
-    <div class="tab active" onclick="setModule('CRYPTO_DESK')">📈 CRYPTO DESK</div>
+    <div class="tab active" onclick="setModule('CRYPTO_DESK')">📈 CRYPTO</div>
     <div class="tab" onclick="setModule('ECU_DIAG')">🔌 ECU DIAG</div>
     <div class="tab" onclick="setModule('WORKSHOP')">🛠️ WORKSHOP</div>
     <div class="tab spotify-tab" onclick="setModule('SPOTIFY')">🎵 SPOTIFY</div>
   </div>
 
-  <div class="main-grid">
-    <div class="card">
-      <div>
-        <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px;">Active Workspace Status</div>
-        <div class="title" id="web-title">SYSTEM OPERATIONAL</div>
-        <div class="subtitle" id="web-subtitle" style="margin-top: 6px;">All operational pipelines synchronized.</div>
+  <div class="grid-layout">
+    <!-- Left Area -->
+    <div class="card" id="main-card">
+      <div class="card-header">
+        <span>ACTIVE PIPELINE WORKSPACE</span>
+        <span id="active-tag" style="color: var(--cyan); font-weight: 700;">LIVE CONNECTED</span>
       </div>
 
-      <div id="spotify-controls-zone">
-        <div class="progress-bg"><div class="progress-fill" id="web-progress"></div></div>
-        <div class="btn-group" style="margin-top: 14px;">
-          <button class="btn" onclick="spControl('prev')">⏮️ Prev</button>
-          <button class="btn" onclick="spControl('play')">▶️ Play</button>
-          <button class="btn" onclick="spControl('pause')">⏸️ Pause</button>
-          <button class="btn" onclick="spControl('next')">⏭️ Next</button>
+      <div>
+        <div class="title" id="web-title">SYSTEM OPERATIONAL</div>
+        <div class="subtitle" id="web-subtitle" style="margin-top: 8px;">All operational pipelines synchronized with ESP32 node.</div>
+      </div>
+
+      <div class="spotify-player">
+        <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Media Control Protocol</div>
+        <div class="progress-bar"><div class="progress-fill" id="web-progress"></div></div>
+        <div class="btn-group">
+          <button class="btn" onclick="spControl('prev')">⏮ PREV</button>
+          <button class="btn" onclick="spControl('play')">▶ PLAY</button>
+          <button class="btn" onclick="spControl('pause')">⏸ PAUSE</button>
+          <button class="btn" onclick="spControl('next')">NEXT ⏭</button>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div style="font-size: 0.65rem; color: var(--text-muted);">BITCOIN SPOT</div>
+          <div class="metric-val" id="btc-val" style="color: var(--amber);">$--</div>
+        </div>
+        <div class="metric-box">
+          <div style="font-size: 0.65rem; color: var(--text-muted);">RIPPLE SPOT</div>
+          <div class="metric-val" id="xrp-val" style="color: var(--cyan);">$--</div>
         </div>
       </div>
     </div>
 
+    <!-- Right Area: ESP32 Screen Mirror -->
     <div class="card">
-      <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">ESP32 CYD Hardware Sync</div>
-      <div class="cyd-frame">
-        <div class="cyd-header">
+      <div class="card-header">ESP32 CYD HARDWARE MIRROR</div>
+      <div class="cyd-mirror-frame">
+        <div class="cyd-top">
           <span id="cyd-agent">COMMAND_HUB</span>
-          <span style="color: var(--accent-spotify);">ESP32 LIVE</span>
+          <span style="color: var(--spotify);">ESP32 ONLINE</span>
         </div>
-        <div style="font-size: 1.1rem; font-weight: bold; color: #fff;" id="cyd-title">--</div>
-        <div style="font-size: 0.85rem; color: #9ca3af;" id="cyd-msg">--</div>
-        <div style="font-size: 0.75rem; color: var(--accent-amber);" id="cyd-ticker">BTC: -- | XRP: --</div>
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 1rem; color: #fff;" id="cyd-title">--</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);" id="cyd-msg">--</div>
+        <div style="font-size: 0.75rem; color: var(--amber); border-top: 1px solid #1f293d; padding-top: 6px;" id="cyd-ticker">BTC: -- | XRP: --</div>
       </div>
     </div>
   </div>
@@ -116,11 +148,17 @@
 
     socket.on('display_update', (data) => {
       document.getElementById('cyd-agent').innerText = data.agent || "COMMAND_HUB";
+      
       if (data.crypto) {
+        document.getElementById('btc-val').innerText = '$' + (data.crypto.btc || '--');
+        document.getElementById('xrp-val').innerText = '$' + (data.crypto.xrp || '--');
         document.getElementById('cyd-ticker').innerText = `BTC: $${data.crypto.btc || '--'} | XRP: $${data.crypto.xrp || '--'}`;
       }
 
+      const mainCard = document.getElementById('main-card');
+
       if (data.currentModule === "SPOTIFY" && data.spotify) {
+        mainCard.classList.add('spotify-mode');
         document.getElementById('web-title').innerText = data.spotify.track;
         document.getElementById('web-subtitle').innerText = data.spotify.artist;
         document.getElementById('cyd-title').innerText = "🎵 " + data.spotify.track;
@@ -131,6 +169,7 @@
           document.getElementById('web-progress').style.width = pct + "%";
         }
       } else {
+        mainCard.classList.remove('spotify-mode');
         document.getElementById('web-title').innerText = data.title;
         document.getElementById('web-subtitle').innerText = data.message;
         document.getElementById('cyd-title').innerText = data.title;
